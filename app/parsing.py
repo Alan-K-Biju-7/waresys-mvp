@@ -1,78 +1,137 @@
 import re
-from typing import List, Dict, Any, Optional
+import logging
+from typing import List, Dict
 
-# ---------------------- Regex Patterns ----------------------
-FIELD_PATTERNS = {
-    "bill_no": [
-        r"(?:Invoice\s*No|Invoice|Inv|Bill|No)\s*[:\-#]?\s*([A-Za-z0-9\-_/]+)"
-    ],
-    "bill_date": [
-        r"(?:Invoice\s*Date|Bill\s*Date|Date)\s*[:\-]?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
-    ],
-    "due_date": [
-        r"(?:Due\s*Date|Payment\s*Due)\s*[:\-]?\s*(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
-    ],
-    "total": [
-        r"(?:Grand\s*Total|Total\s*Amount|Amount\s*Payable)\s*[:\-]?\s*([\d,]+\.\d{2})"
-    ],
-    "po_number": [
-        r"(?:PO\s*No|Purchase\s*Order)\s*[:\-]?\s*([A-Za-z0-9\-_/]+)"
+logger = logging.getLogger(__name__)
+
+def normalize_text(ocr_text: str) -> str:
+    # collapse whitespace but keep newlines for ^$ regex
+    text = ocr_text.replace("\r", "\n")
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{2,}", "\n", text)
+    return text.strip()
+
+def _clean_num(s: str) -> str:
+    # Fix common OCR mistakes and remove thousands separators
+    s = s.replace("O", "0").replace("o", "0")
+    s = s.replace(",", "")
+    s = s.replace("₹", "").replace("$", "")
+    return s.strip()
+
+def parse_header(ocr_text: str) -> Dict[str, str]:
+    text = normalize_text(ocr_text)
+    patterns = {
+        "bill_no": r"(?:Invoice\s*No\.?|Bill\s*No\.?)\s*[:\-]?\s*([A-Za-z0-9\-\/]+)",
+        "bill_date": r"(?:Date)\s*[:\-]?\s*(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})",
+        "total": r"(?:Grand\s*Total|Total\s*Amount|Total)\s*[:\-]?\s*([0-9,]+(?:\.\d{1,2})?)",
+        "party_name": r"(?:To|Party|Vendor|Customer)\s*[:\-]?\s*([A-Za-z0-9 &.,\-]+)"
+    }
+    out = {}
+    for k, p in patterns.items():
+        m = re.search(p, text, re.IGNORECASE)
+        out[k] = _clean_num(m.group(1)) if k == "total" and m else (m.group(1).strip() if m else None)
+    return out
+
+def parse_lines(ocr_text: str) -> List[Dict]:
+    """
+    Extract line items in flexible formats, e.g.:
+      12  Cement OPC 50kg bag         380.00  4560.00
+      8   Galvanized Bracket L-50     120     960
+      5   Screws M6x30                ₹85     ₹425
+    Fallback: qty at start, last two tokens are prices.
+    """
+    text = normalize_text(ocr_text)
+
+    # Common numeric pattern allowing thousands and optional decimals
+    MONEY = r"[₹$]?\s*[0-9][0-9,]*(?:\.\d{1,2})?"
+    QTY = r"\d+"
+
+    patterns = [
+        # qty desc unit_price line_total
+        re.compile(rf"^\s*({QTY})\s+(.+?)\s+({MONEY})\s+({MONEY})\s*$", re.MULTILINE),
+        # qty desc line_total (no explicit unit price) → infer unit_price = total/qty
+        re.compile(rf"^\s*({QTY})\s+(.+?)\s+({MONEY})\s*$", re.MULTILINE),
     ]
-}
 
-def parse_kv_fields_from_zone(text: str) -> Dict[str, Optional[str]]:
-    """Extract key-value fields (bill no, date, total, etc.) using regex."""
-    results: Dict[str, Optional[str]] = {}
-    for field, patterns in FIELD_PATTERNS.items():
-        results[field] = None
-        for pat in patterns:
-            m = re.search(pat, text, re.I)
-            if m:
-                results[field] = m.group(1).strip()
-                break
-    return results
+    parsed: List[Dict] = []
 
-def parse_line_items_from_tokens(lines: List[str]) -> List[Dict[str, Any]]:
-    """
-    Parse invoice line items from OCR text lines.
-    """
-    out: List[Dict[str, Any]] = []
-    in_table = False
+    # Try regex patterns first
+    for pat in patterns:
+        matches = pat.findall(text)
+        if matches:
+            for i, m in enumerate(matches, start=1):
+                if len(m) == 4:
+                    qty_s, desc, up_s, lt_s = m
+                    qty = int(_clean_num(qty_s))
+                    unit_price = float(_clean_num(up_s))
+                    line_total = float(_clean_num(lt_s))
+                else:
+                    qty_s, desc, lt_s = m
+                    qty = int(_clean_num(qty_s))
+                    line_total = float(_clean_num(lt_s))
+                    unit_price = round(line_total / max(qty, 1), 2)
 
-    for raw in lines:
-        raw = raw.strip()
-        if not raw:
+                parsed.append({
+                    "id": len(parsed) + 1,
+                    "product_id": None,
+                    "description_raw": desc.strip(),
+                    "qty": qty,
+                    "unit_price": unit_price,
+                    "line_total": line_total,
+                    "ocr_confidence": 0.95
+                })
+            return parsed  # stop at first successful pattern
+
+    # Fallback: heuristic column split
+    fallback = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
             continue
-
-        # Detect start of table
-        if not in_table and "Qty" in raw and "Unit" in raw:
-            in_table = True
+        # must start with qty
+        m = re.match(rf"^\s*({QTY})\s+(.+)$", line)
+        if not m:
             continue
+        qty = int(_clean_num(m.group(1)))
+        rest = m.group(2)
 
-        if in_table:
-            # Flexible parser: qty first, unit_price + total last
-            parts = raw.split()
-            if len(parts) < 5:
-                continue
-
+        # take last two numeric tokens as prices if present, else skip
+        tokens = rest.split()
+        nums = [t for t in tokens if re.fullmatch(MONEY, t)]
+        if len(nums) >= 2:
+            lt_s = _clean_num(nums[-1])
+            up_s = _clean_num(nums[-2])
+            # description is everything before the last two nums
             try:
-                qty = float(parts[0])
-                sku = parts[1].upper()
-                unit_price = float(parts[-2])
-                line_total = float(parts[-1])
-                desc = " ".join(parts[2:-2])
-
-                conf = 0.95 if abs((qty * unit_price) - line_total) < 1 else 0.7
-
-                out.append({
-                    "sku": sku,
+                cut = rest.rfind(nums[-2])
+                desc = rest[:cut].strip()
+                unit_price = float(up_s)
+                line_total = float(_clean_num(lt_s))
+                fallback.append({
+                    "id": len(parsed) + len(fallback) + 1,
+                    "product_id": None,
                     "description_raw": desc,
                     "qty": qty,
                     "unit_price": unit_price,
                     "line_total": line_total,
-                    "ocr_confidence": conf
+                    "ocr_confidence": 0.9
                 })
             except Exception:
                 continue
 
-    return out
+    if fallback:
+        logger.info(f"Fallback parser captured {len(fallback)} lines")
+        return fallback
+
+    return []  # nothing matched
+
+def deduplicate_lines(lines: List[Dict]) -> List[Dict]:
+    """Remove duplicates by description + qty + prices."""
+    seen = set()
+    unique = []
+    for line in lines:
+        key = (line["description_raw"].lower(), line["qty"], round(line["unit_price"], 2), round(line["line_total"], 2))
+        if key not in seen:
+            seen.add(key)
+            unique.append(line)
+    return unique
