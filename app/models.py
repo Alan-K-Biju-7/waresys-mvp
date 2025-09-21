@@ -69,8 +69,10 @@ class Bill(Base):
     source: Mapped[str] = mapped_column(String, nullable=False)      # OCR|MANUAL
     status: Mapped[str] = mapped_column(String, default="PENDING")   # PENDING|CONFIRMED|VOID
     uploaded_doc: Mapped[str | None] = mapped_column(String)
+    total: Mapped[float | None] = mapped_column(Numeric(12, 2))
 
     vendor_id: Mapped[int | None] = mapped_column(ForeignKey("vendors.id"))
     vendor: Mapped["Vendor"] = relationship("Vendor", back_populates="bills")
 
     __table_args__ = (UniqueConstraint("party_name", "bill_no", name="uq_party_billno"),)
+    lines = relationship("BillLine", backref="bill", cascade="all, delete-orphan")

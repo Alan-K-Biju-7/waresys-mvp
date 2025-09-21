@@ -6,7 +6,7 @@ import time
 from .config import settings
 
 engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True)
-SessionLocal = sessionmaker(bind=engine, autoflush=False)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 class Base(DeclarativeBase):
     pass
@@ -16,7 +16,9 @@ def init_db():
     while True:
         try:
             with engine.connect() as conn:
-                conn.execute(text("SELECT 1"))   # ✅ valid
+                conn.execute(text("SELECT 1"))
+            # ✅ Auto-create tables if not present
+            Base.metadata.create_all(bind=engine)
             break
         except OperationalError:
             attempts += 1

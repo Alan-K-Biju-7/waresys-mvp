@@ -20,9 +20,8 @@ FIELD_PATTERNS = {
     ]
 }
 
-
 def parse_kv_fields_from_zone(text: str) -> Dict[str, Optional[str]]:
-    """Try to extract key-value fields using regex aliases from a text zone."""
+    """Extract key-value fields (bill no, date, total, etc.) using regex."""
     results: Dict[str, Optional[str]] = {}
     for field, patterns in FIELD_PATTERNS.items():
         results[field] = None
@@ -33,39 +32,47 @@ def parse_kv_fields_from_zone(text: str) -> Dict[str, Optional[str]]:
                 break
     return results
 
-
-def parse_line_items_from_tokens(tokens: List[str]) -> List[Dict[str, Any]]:
-    """Parse line items by detecting qty, unit price, total, with confidence scoring."""
-    joined = " ".join(tokens)
-    rows = re.split(r"\n|  {2,}|\t|\r", joined)
+def parse_line_items_from_tokens(lines: List[str]) -> List[Dict[str, Any]]:
+    """
+    Parse invoice line items from OCR text lines.
+    """
     out: List[Dict[str, Any]] = []
+    in_table = False
 
-    for r in rows:
-        numbers = re.findall(r"(\d+(?:\.\d{1,2})?)", r)
-        if not numbers:
+    for raw in lines:
+        raw = raw.strip()
+        if not raw:
             continue
 
-        desc = re.sub(r"\d+(?:\.\d{1,2})?", "", r).strip()
-        qty = float(numbers[0]) if len(numbers) >= 1 else None
-        unit_price = float(numbers[1]) if len(numbers) >= 2 else None
-        line_total = float(numbers[2]) if len(numbers) >= 3 else None
+        # Detect start of table
+        if not in_table and "Qty" in raw and "Unit" in raw:
+            in_table = True
+            continue
 
-        # Confidence scoring
-        conf = 0.5
-        if qty and unit_price and line_total:
-            if abs((qty * unit_price) - line_total) < 1:
-                conf = 0.95
-            else:
-                conf = 0.7
-        elif qty and unit_price:
-            conf = 0.8
+        if in_table:
+            # Flexible parser: qty first, unit_price + total last
+            parts = raw.split()
+            if len(parts) < 5:
+                continue
 
-        out.append({
-            "description_raw": desc[:200] or r[:200],
-            "qty": qty,
-            "unit_price": unit_price,
-            "line_total": line_total,
-            "ocr_confidence": conf
-        })
+            try:
+                qty = float(parts[0])
+                sku = parts[1].upper()
+                unit_price = float(parts[-2])
+                line_total = float(parts[-1])
+                desc = " ".join(parts[2:-2])
 
-    return out[:50]
+                conf = 0.95 if abs((qty * unit_price) - line_total) < 1 else 0.7
+
+                out.append({
+                    "sku": sku,
+                    "description_raw": desc,
+                    "qty": qty,
+                    "unit_price": unit_price,
+                    "line_total": line_total,
+                    "ocr_confidence": conf
+                })
+            except Exception:
+                continue
+
+    return out

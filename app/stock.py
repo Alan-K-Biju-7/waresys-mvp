@@ -13,7 +13,9 @@ def confirm_bill(db: Session, bill_id: int, bill_type: str):
     try:
         for ln in lines:
             if not ln.product_id:
-                raise ValueError("Unresolved product in lines; complete review first")
+                # raise ValueError("Unresolved product in lines; complete review first")
+                crud.add_review(db, bill_id=bill_id, issues=f"Unresolved product in line: {ln.description_raw}")
+                raise HTTPException(400, "Review required: unresolved products found")
             qty = float(ln.qty)
             qty_change = qty if bill_type == "PURCHASE" else -qty
             crud.add_ledger(db, product_id=ln.product_id, qty_change=qty_change, txn_type=bill_type, ref_bill_id=bill_id, notes="auto")

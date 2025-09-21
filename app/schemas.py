@@ -81,10 +81,13 @@ class BillLineOut(BaseModel):
     description_raw: Optional[str] = None
     qty: float
     unit_price: Optional[float] = None
-    conf: float = 0.0
+    line_total: Optional[float] = None   # ✅ add this
+    ocr_confidence: float = 0.0
+
 
     class Config:
         from_attributes = True
+
 
 
 class BillOut(BaseModel):

@@ -44,6 +44,13 @@ def create_bill(db: Session, bill_in: schemas.BillCreate, allow_update: bool = F
                 data["bill_date"] = date.today()
     elif bill_date_raw is None:
         data["bill_date"] = date.today()
+    
+    existing = db.query(models.Bill).filter_by(
+        party_name=data.get("party_name"), 
+        bill_no=data["bill_no"]
+    ).first()
+    if existing and not allow_update:
+        return {"duplicate": True, "message": "Duplicate bill exists"}
 
     # vendor linking...
     party_name = data.get("party_name")

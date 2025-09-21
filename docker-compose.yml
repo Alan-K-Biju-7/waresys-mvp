@@ -18,48 +18,36 @@ services:
       - "6379:6379"
 
   api:
-    build:
+    build: 
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env                # ✅ ensure Alembic can see DATABASE_URL
-    volumes:
-      - ./app:/app/app
-      - ./alembic:/app/alembic
-      - ./alembic.ini:/app/alembic.ini
-    ports:
-      - "8000:8000"
+      - .env
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - db
+      - redis
+    ports:
+      - "8000:8000"
+    volumes:
+
+      - ./app:/app/app
+      - ./app/uploads:/app/uploads   # ✅ mount host uploads into container
 
   worker:
     build:
       context: .
       dockerfile: Dockerfile
-    env_file: ./.env
+    env_file:
+      - .env
     command: celery -A app.tasks:celery_app worker --loglevel=INFO --concurrency=2
     depends_on:
       - api
       - db
       - redis
     volumes:
-      - ./app:/app/app        # keep same mount as api for consistency
-      - ./uploads:/app/app/uploads
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    ports:
-      - "3000:3000"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    depends_on:
-      - api
+      - ./app:/app/app
+      - ./app/uploads:/app/uploads
 
 volumes:
   dbdata:
-  

@@ -24,7 +24,13 @@ def match_line_to_catalog(line: Dict[str, Any], db: Session, products_cache: Lis
         if not best or score > best[0]:
             best = (score, p["id"])
     resolved = best[1] if best and best[0] >= 0.75 else None
-    return {"description_raw": line["description_raw"], "qty": qty, "unit_price": unit_price,
-            "line_total": line.get("line_total"), "candidate_product_ids": [best[1]] if best else [],
-            "match_score": float(best[0]) if best else 0.0, "ocr_confidence": 0.75 if resolved else 0.6,
-            "resolved_product_id": resolved}
+    return {
+        "description_raw": line["description_raw"],
+        "qty": qty,
+        "unit_price": unit_price,
+        "line_total": line.get("line_total"),
+        "candidate_product_ids": [best[1]] if best else [],
+        "match_score": float(best[0]) if best else 0.0,
+        "ocr_confidence": 0.75 if resolved else 0.6,
+        "resolved_product_id": resolved,   # ✅ standardize field
+    }
