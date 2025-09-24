@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import text
+from sqlalchemy import text, func
 from typing import List,Optional
 from .config import settings
 from .db import SessionLocal, init_db
@@ -13,11 +13,18 @@ from . import crud, models, schemas
 from .tasks import celery_app
 from .stock import confirm_bill
 from datetime import date
+from app.presentation_adapter import router as presentation_router
 
 
 app = FastAPI(title="Waresys MVP", version="1.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # for the demo, file:// or any origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(presentation_router)
 logger = logging.getLogger(__name__)
 
 def get_db():
@@ -230,3 +237,63 @@ def ping(db: Session = Depends(get_db)):
         return {"status": "ok", "db": "connected"}
     except Exception as e:
         return {"status": "error", "db": str(e)}
+
+# ===== Auto-added routes to match frontend =====
+
+@app.post("/bills/upload", response_model=schemas.OCRResult)
+def upload_invoice_alias(
+    file: UploadFile = File(...),
+    party_name: str | None = Form(None),
+    bill_no: str | None = Form(None),
+    bill_date: str | None = Form(None),
+    db: Session = Depends(get_db)
+):
+    # Delegate to existing /bills/ocr logic
+    return upload_invoice(file=file, party_name=party_name, bill_no=bill_no, bill_date=bill_date, db=db)
+
+
+@app.get("/bills", response_model=List[schemas.BillOut])
+def list_bills(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    bills = db.query(models.Bill).order_by(models.Bill.id.desc()).offset(skip).limit(limit).all()
+    for b in bills:
+        try:
+            b.lines = db.query(models.BillLine).filter_by(bill_id=b.id).all()
+        except Exception:
+            pass
+        try:
+            review = db.query(models.ReviewQueue).filter_by(bill_id=b.id, status="OPEN").first()
+            b.needs_review = bool(review)
+        except Exception:
+            pass
+    return bills
+
+
+@app.get("/dashboard/summary")
+def dashboard_summary(db: Session = Depends(get_db)):
+    products_total = db.query(models.Product).count()
+    stock_total_qty = db.query(func.coalesce(func.sum(models.Product.stock_qty), 0)).scalar() or 0
+
+    try:
+        bills_processed = db.query(models.Bill).filter(models.Bill.status == "PROCESSED").count()
+        bills_pending   = db.query(models.Bill).filter(models.Bill.status != "PROCESSED").count()
+    except Exception:
+        bills_processed = 0
+        bills_pending = 0
+
+    try:
+        rows = db.query(
+            models.Product.category,
+            func.coalesce(func.sum(models.Product.stock_qty), 0).label("qty")
+        ).group_by(models.Product.category)         .order_by(func.sum(models.Product.stock_qty).desc())         .limit(6).all()
+        category_breakdown = [{"category": r[0] or "Uncategorized", "qty": int(r[1] or 0)} for r in rows]
+    except Exception:
+        category_breakdown = []
+
+    return {
+        "products_total": int(products_total or 0),
+        "stock_total_qty": int(stock_total_qty or 0),
+        "bills_processed": int(bills_processed or 0),
+        "bills_pending": int(bills_pending or 0),
+        "category_breakdown": category_breakdown
+    }
+

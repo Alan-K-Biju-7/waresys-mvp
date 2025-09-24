@@ -1,0 +1,344 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Waresys • Dark UI (Connected)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Frontend deps via CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
+
+  <style>
+    :root{ --bg:#0c1020; --panel:#121630; --muted:#9aa4c7; --text:#e8ecff; --brand:#6ea8ff; --brand2:#7df5ff; --vio:#9b7dff; --glass:rgba(255,255,255,.04); }
+    *{box-sizing:border-box}
+    body{ margin:0; background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(109,87,255,.25), transparent 60%),
+      radial-gradient(800px 400px at -10% 110%, rgba(0,186,255,.18), transparent 60%),
+      linear-gradient(135deg,#0a0e1b 0%,#0c1020 35%,#0a0f24 100%);
+      color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto; }
+    .neon{background:linear-gradient(90deg,var(--brand2),var(--brand),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .navbar{background:rgba(8,12,28,.7); backdrop-filter:blur(8px); border-bottom:1px solid rgba(126,155,255,.18)}
+    .navbar .nav-link,.navbar .navbar-brand{color:var(--text)!important; opacity:.9}
+    .nav-pills .nav-link.active{background:linear-gradient(90deg,var(--brand2),var(--brand)); color:#000!important}
+    .sidebar{ width:240px; min-height:100vh; position:fixed; top:56px; left:0; padding:18px 14px;
+      background:rgba(8,12,28,.55); border-right:1px solid rgba(126,155,255,.12); backdrop-filter: blur(8px); }
+    .content{margin-left:240px; padding:22px}
+    .card{ background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.02));
+      border:1px solid rgba(126,155,255,.14); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.35) }
+    .btn-primary{background:linear-gradient(90deg,var(--brand2),var(--brand)); border:0}
+    .btn-outline{color:var(--text); border:1px solid rgba(126,155,255,.25)}
+    .small-muted{color:var(--muted); font-size:.9rem}
+    .dropzone{border:1px dashed rgba(126,155,255,.35); border-radius:14px; padding:22px; text-align:center; cursor:pointer}
+    .chip{padding:.35rem .6rem; border-radius:999px; font-size:.85rem}
+    .chip-ok{background:rgba(46,213,115,.16); color:#6fffb1; border:1px solid rgba(46,213,115,.28)}
+    .chip-warn{background:rgba(255,193,7,.12); color:#ffd26a; border:1px solid rgba(255,193,7,.25)}
+    .table > :not(caption) > * > *{background:transparent; color:var(--text); border-color:rgba(126,155,255,.14)}
+    .table thead tr{background:rgba(126,155,255,.06)!important}
+    .section{display:none}
+    .section.active{display:block}
+    .badge-soft{background:rgba(110,168,255,.12); color:#bcd2ff; border:1px solid rgba(110,168,255,.25)}
+    @media (max-width: 992px){ .sidebar{position:static; width:100%; min-height:auto} .content{margin:0}}
+  </style>
+
+  <!-- Same-origin API by default; can override via localStorage.WARESYS_API -->
+  <script>
+    window.WARESYS = {
+      BASE_URL: (localStorage.getItem('WARESYS_API') || window.location.origin).replace(/\/+$/,'')
+    };
+  </script>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container-fluid px-3">
+    <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="#"><i class="bi bi-box-seam"></i> Waresys</a>
+    <div class="ms-auto">
+      <span id="apiStatus" class="badge rounded-pill text-bg-dark border" style="border-color:rgba(126,155,255,.3)!important;">API: checking…</span>
+    </div>
+  </div>
+</nav>
+
+<div class="sidebar">
+  <div class="small-muted mb-2">Navigation</div>
+  <ul class="nav nav-pills flex-column gap-2" id="sideNav">
+    <li class="nav-item"><a class="nav-link active" data-target="dashboard" href="#"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link" data-target="products" href="#"><i class="bi bi-boxes me-1"></i>Products</a></li>
+    <li class="nav-item"><a class="nav-link" data-target="vendors" href="#"><i class="bi bi-truck me-1"></i>Vendors</a></li>
+    <li class="nav-item"><a class="nav-link" data-target="bills" href="#"><i class="bi bi-receipt me-1"></i>Bills & OCR</a></li>
+    <li class="nav-item"><a class="nav-link" data-target="reports" href="#"><i class="bi bi-graph-up-arrow me-1"></i>Reports</a></li>
+  </ul>
+</div>
+
+<div class="content">
+
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="section active">
+    <div class="d-flex flex-wrap align-items-end justify-content-between">
+      <div>
+        <h2 class="fw-bold neon mb-1">Inventory Overview</h2>
+        <div class="small-muted">FastAPI + same-origin frontend</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button id="btnSeed" class="btn btn-outline"><i class="bi bi-magic me-1"></i>Seed Demo Data</button>
+        <button id="btnRefresh" class="btn btn-outline"><i class="bi bi-arrow-repeat me-1"></i>Refresh</button>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Total SKUs</div><div id="kSkus" class="fs-3 fw-semibold">—</div></div></div>
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Stock Qty</div><div id="kStock" class="fs-3 fw-semibold">—</div></div></div>
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Processed Bills</div><div id="kProc" class="fs-3 fw-semibold">—</div></div></div>
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Pending Bills</div><div id="kPend" class="fs-3 fw-semibold">—</div></div></div>
+    </div>
+
+    <div class="row g-4 mt-1">
+      <div class="col-lg-6">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Stock by Category</h5>
+            <span class="badge badge-soft">Donut</span>
+          </div>
+          <canvas id="donut"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Weekly Stock Movement</h5>
+            <span class="badge badge-soft">Bar</span>
+          </div>
+          <canvas id="bar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-3 mt-4">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Bills / Stock Updates</h5>
+        <div class="small-muted">Fills from /bills</div>
+      </div>
+      <div class="table-responsive mt-3">
+        <table class="table align-middle">
+          <thead><tr><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+        <tbody id="billTable"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section id="products" class="section">
+    <div class="d-flex justify-content-between align-items-end">
+      <div><h2 class="fw-bold neon mb-1">Products</h2><div class="small-muted">Add / Search / Update</div></div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProduct"><i class="bi bi-plus-lg me-1"></i>Add Product</button>
+    </div>
+    <div class="card p-3 mt-3">
+      <div class="row g-2">
+        <div class="col-md-6"><input id="qProducts" class="form-control" placeholder="Search product name..."></div>
+        <div class="col-md-2"><button id="btnSearchProducts" class="btn btn-outline w-100"><i class="bi bi-search me-1"></i>Search</button></div>
+      </div>
+      <div class="table-responsive mt-3">
+        <table class="table align-middle">
+          <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Stock</th><th>Price</th></tr></thead>
+          <tbody id="prodTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- VENDORS -->
+  <section id="vendors" class="section">
+    <div class="d-flex justify-content-between align-items-end">
+      <div><h2 class="fw-bold neon mb-1">Vendors</h2><div class="small-muted">Manage supplier profiles</div></div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalVendor"><i class="bi bi-plus-lg me-1"></i>Add Vendor</button>
+    </div>
+    <div class="card p-3 mt-3">
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th></tr></thead>
+          <tbody id="vendTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- BILLS & OCR -->
+  <section id="bills" class="section">
+    <div class="d-flex justify-content-between align-items-end">
+      <div><h2 class="fw-bold neon mb-1">Bills & OCR</h2><div class="small-muted">Upload → Extract → Update stock</div></div>
+    </div>
+
+    <div class="row g-3 mt-1">
+      <div class="col-lg-5">
+        <div class="card p-3">
+          <h5 class="mb-2">Upload Bill (OCR)</h5>
+          <div id="dz" class="dropzone">
+            <i class="bi bi-cloud-arrow-up-fill fs-1 d-block mb-2" style="color:var(--brand)"></i>
+            <div class="fw-semibold">Drag & drop PDF/Image</div>
+            <div class="small-muted">or click to choose a file</div>
+            <input id="file" hidden type="file" accept="image/*,.pdf">
+          </div>
+          <div class="row g-2 mt-2">
+            <div class="col-6"><input id="vendorName" class="form-control" placeholder="Vendor (optional)"></div>
+            <div class="col-6"><input id="billNo" class="form-control" placeholder="Bill No (optional)"></div>
+          </div>
+          <div class="d-grid gap-2 mt-3">
+            <button id="btnOCR" class="btn btn-primary"><i class="bi bi-cpu me-1"></i>Process OCR</button>
+            <div class="progress" style="height:10px; display:none;"><div id="pb" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%; background:linear-gradient(90deg,var(--brand2),var(--brand))"></div></div>
+          </div>
+          <div class="small-muted mt-3">Extracted (preview)</div>
+          <div class="border rounded-3 p-2" style="border-color:rgba(126,155,255,.2)!important;">
+            <div class="d-flex justify-content-between small"><span class="text-secondary">Vendor</span><span id="pvVendor">—</span></div>
+            <div class="d-flex justify-content-between small"><span class="text-secondary">Bill No</span><span id="pvBill">—</span></div>
+            <div class="d-flex justify-content-between small"><span class="text-secondary">Date</span><span id="pvDate">—</span></div>
+            <div class="d-flex justify-content-between small"><span class="text-secondary">Total</span><span>₹ <span id="pvTotal">—</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="card p-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Bills</h5>
+            <span class="badge badge-soft">Live from API</span>
+          </div>
+          <div class="table-responsive mt-2">
+            <table class="table align-middle">
+              <thead><tr><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody id="ocrTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORTS -->
+  <section id="reports" class="section">
+    <div class="d-flex justify-content-between align-items-end">
+      <div><h2 class="fw-bold neon mb-1">Reports</h2><div class="small-muted">Charts based on /dashboard/summary</div></div>
+      <button id="btnRefreshReports" class="btn btn-outline"><i class="bi bi-arrow-repeat me-1"></i>Refresh</button>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-lg-6"><div class="card p-3"><h5 class="mb-2">Top Categories</h5><canvas id="repCat"></canvas></div></div>
+      <div class="col-lg-6"><div class="card p-3"><h5 class="mb-2">Bill Status Split</h5><canvas id="repBills"></canvas></div></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- MODALS -->
+<div class="modal fade" id="modalProduct" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
+    <div class="modal-header"><h5 class="modal-title">Add Product</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="row g-2">
+        <div class="col-md-6"><input id="mSku" class="form-control" placeholder="SKU (unique)"></div>
+        <div class="col-md-6"><input id="mName" class="form-control" placeholder="Name"></div>
+        <div class="col-md-6"><input id="mCat" class="form-control" placeholder="Category"></div>
+        <div class="col-md-3"><input id="mQty" class="form-control" placeholder="Stock" value="10" type="number" min="0"></div>
+        <div class="col-md-3"><input id="mPrice" class="form-control" placeholder="Price" value="250" type="number" min="0" step="0.01"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button><button id="btnAddProd" class="btn btn-primary" data-bs-dismiss="modal">Add</button></div>
+  </div></div>
+</div>
+
+<div class="modal fade" id="modalVendor" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
+    <div class="modal-header"><h5 class="modal-title">Add Vendor</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="row g-2">
+        <div class="col-md-6"><input id="vName" class="form-control" placeholder="Name"></div>
+        <div class="col-md-6"><input id="vEmail" class="form-control" placeholder="Email"></div>
+        <div class="col-md-6"><input id="vPhone" class="form-control" placeholder="Phone"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button><button id="btnAddVend" class="btn btn-primary" data-bs-dismiss="modal">Add</button></div>
+  </div></div>
+</div>
+
+<!-- TOAST -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
+  <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body"><i class="bi bi-check-circle-fill me-2"></i><span id="toastMsg">Action completed</span></div>
+      <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const BASE = (localStorage.getItem('WARESYS_API') || window.location.origin).replace(/\/+$/,'');
+  const apiStatus = document.getElementById('apiStatus');
+  const toast = new bootstrap.Toast(document.getElementById('toast'));
+  const toastMsg = document.getElementById('toastMsg');
+  const setToast = (m,ok=true)=>{const el=document.getElementById('toast');el.classList.toggle('text-bg-success',ok);el.classList.toggle('text-bg-danger',!ok);toastMsg.textContent=m;toast.show();};
+  const rupee = n => '₹ ' + (Number(n||0)).toLocaleString('en-IN');
+  async function api(path, opts={}){ const r=await fetch(`${BASE}${path}`,opts); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+
+  const sections=document.querySelectorAll('.section');
+  document.querySelectorAll('#sideNav .nav-link').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();document.querySelectorAll('#sideNav .nav-link').forEach(x=>x.classList.remove('active'));a.classList.add('active');sections.forEach(s=>s.classList.toggle('active',s.id===a.dataset.target));window.scrollTo({top:0,behavior:'smooth'});}))
+
+  let donut, bar, repCat, repBills;
+  function initCharts(){
+    donut=new Chart(document.getElementById('donut'),{type:'doughnut',data:{labels:[],datasets:[{data:[]}]},options:{cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:'#cfd6ff'}}}}});
+    bar=new Chart(document.getElementById('bar'),{type:'bar',data:{labels:['Wk1','Wk2','Wk3','Wk4'],datasets:[{label:'Stock In',data:[50,75,60,90]},{label:'Stock Out',data:[30,40,35,70]}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#cfd6ff'}}},scales:{y:{beginAtZero:true,ticks:{color:'#cfd6ff'}},x:{ticks:{color:'#cfd6ff'}}}}});
+    repCat=new Chart(document.getElementById('repCat'),{type:'pie',data:{labels:[],datasets:[{data:[]}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#cfd6ff'}}}}});
+    repBills=new Chart(document.getElementById('repBills'),{type:'doughnut',data:{labels:['Processed','Pending'],datasets:[{data:[0,0]}]},options:{plugins:{legend:{position:'bottom',labels:{color:'#cfd6ff'}}}}});
+  }
+
+  async function loadSummary(){
+    const s=await api('/dashboard/summary');
+    kSkus.textContent=s.products_total.toLocaleString('en-IN');
+    kStock.textContent=s.stock_total_qty.toLocaleString('en-IN');
+    kProc.textContent=s.bills_processed.toLocaleString('en-IN');
+    kPend.textContent=s.bills_pending.toLocaleString('en-IN');
+    donut.data.labels=s.category_breakdown.map(x=>x.category); donut.data.datasets[0].data=s.category_breakdown.map(x=>x.qty); donut.update();
+    repCat.data.labels=s.category_breakdown.map(x=>x.category); repCat.data.datasets[0].data=s.category_breakdown.map(x=>x.qty); repCat.update();
+    repBills.data.datasets[0].data=[s.bills_processed,s.bills_pending]; repBills.update();
+  }
+
+  async function loadBills(){
+    const rows=await api('/bills'); billTable.innerHTML=''; ocrTable.innerHTML='';
+    rows.forEach(b=>{const items=(b.lines||[]).reduce((a,x)=>a+(x.qty||0),0); const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${b.bill_no||'-'}</td><td>${b.vendor?.name||'-'}</td><td>${b.bill_date||''}</td><td>${items}</td><td>${rupee(b.total_amount||0)}</td><td><span class="chip ${b.status==='PROCESSED'?'chip-ok':'chip-warn'}">${b.status}</span></td>`;
+      billTable.appendChild(tr); if(b.status!=='PROCESSED') ocrTable.appendChild(tr.cloneNode(true));
+    });
+  }
+
+  async function loadProducts(q=''){ const rows=await api('/products'+(q?`?q=${encodeURIComponent(q)}`:'')); prodTable.innerHTML=''; rows.forEach(p=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${p.sku}</td><td>${p.name}</td><td>${p.category||'-'}</td><td>${p.stock_qty}</td><td>${rupee(p.price)}</td>`; prodTable.appendChild(tr);}); }
+  async function loadVendors(){ const rows=await api('/vendors'); vendTable.innerHTML=''; rows.forEach(v=>{const tr=document.createElement('tr'); tr.innerHTML=`<td>${v.name}</td><td>${v.email||''}</td><td>${v.phone||''}</td>`; vendTable.appendChild(tr);}); }
+
+  dz.onclick=()=>file.click();
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(--brand)';});
+  dz.addEventListener('dragleave',()=>dz.style.borderColor='rgba(126,155,255,.35)');
+  dz.addEventListener('drop',e=>{e.preventDefault();file.files=e.dataTransfer.files;dz.style.borderColor='rgba(126,155,255,.35)'});
+  btnOCR.onclick=uploadAndProcess;
+
+  async function pollBill(id,tries=30,delay=700){ for(let i=0;i<tries;i++){ const b=await api('/bills/'+id); if(b.status==='PROCESSED'||b.status==='ERROR') return b; await new Promise(r=>setTimeout(r,delay)); } throw new Error('Processing timeout'); }
+  async function uploadAndProcess(){
+    if(!file.files||!file.files[0]){ setToast('Choose a PDF/Image first',false); return; }
+    try{
+      btnOCR.disabled=true; document.querySelector('#bills .progress').style.display='block'; pb.style.width='0%';
+      const fd=new FormData(); fd.append('file',file.files[0]);
+      const vname=vendorName.value.trim(), bno=billNo.value.trim(); if(vname) fd.append('party_name',vname); if(bno) fd.append('bill_no',bno);
+      const bill=await api('/bills/upload',{method:'POST',body:fd}); let pct=0; const prog=setInterval(()=>{pct=Math.min(100,pct+12); pb.style.width=pct+'%';},250);
+      const final=await pollBill(bill.bill_id,40,700); clearInterval(prog); pb.style.width='100%'; setTimeout(()=>{ document.querySelector('#bills .progress').style.display='none'; },300);
+      pvVendor.textContent=vname||final.vendor?.name||'—'; pvBill.textContent=bno||final.bill_no||'—'; pvDate.textContent=final.bill_date||'—'; pvTotal.textContent=(final.total_amount||0).toLocaleString('en-IN');
+      setToast('OCR completed. Bill saved & stock updated.'); await Promise.all([loadSummary(),loadBills(),loadProducts()]);
+    }catch(e){ document.querySelector('#bills .progress').style.display='none'; btnOCR.disabled=false; setToast('Upload/OCR failed: '+e.message,false); } finally{ btnOCR.disabled=false; }
+  }
+
+  btnAddProd.onclick=async ()=>{ const payload={ sku:mSku.value.trim(), name:mName.value.trim(), category:mCat.value.trim()||null, stock_qty:Number(mQty.value||0), price:Number(mPrice.value||0), vendor_id:null }; if(!payload.sku||!payload.name){ setToast('SKU and Name are required',false); return; } await api('/products',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); setToast('Product created'); await Promise.all([loadProducts(),loadSummary()]); };
+  btnAddVend.onclick=async ()=>{ const payload={ name:vName.value.trim(), email:vEmail.value.trim()||null, phone: vPhone.value.trim()||null }; if(!payload.name){ setToast('Vendor name is required',false); return; } await api('/vendors',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); setToast('Vendor added'); await loadVendors(); };
+  btnSearchProducts.onclick=()=>loadProducts(qProducts.value.trim());
+  btnRefresh.onclick=()=>Promise.all([loadSummary(),loadBills()]);
+  btnRefreshReports.onclick=loadSummary;
+  btnSeed.onclick=async ()=>{ try{ await api('/_seed',{method:'POST'});}catch(e){} await Promise.all([loadSummary(),loadProducts(),loadVendors(),loadBills()]); setToast('Seed complete'); };
+
+  (async function(){ apiStatus.textContent='API: '+BASE; initCharts(); try{ await api('/ping'); apiStatus.textContent='API: connected'; }catch(_){ apiStatus.textContent='API: unreachable'; } await Promise.all([loadSummary().catch(()=>{}),loadProducts().catch(()=>{}),loadVendors().catch(()=>{}),loadBills().catch(()=>{})]); })();
+</script>
+</body>
+</html>
