@@ -1,53 +1,42 @@
-version: "3.9"
+version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
     environment:
-      POSTGRES_USER: waresys
-      POSTGRES_PASSWORD: waresys
-      POSTGRES_DB: waresys
+      - POSTGRES_USER=waresys
+      - POSTGRES_PASSWORD=waresys
+      - POSTGRES_DB=waresys
     ports:
       - "5432:5432"
-    volumes:
-      - dbdata:/var/lib/postgresql/data
 
   redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
+    image: redis:6.2-alpine
 
   api:
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    depends_on:
-      - db
-      - redis
+    build: .
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
-    volumes:
-
-      - ./app:/app/app
-      - ./app/uploads:/app/uploads   # ✅ mount host uploads into container
-
-  worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    command: celery -A app.tasks:celery_app worker --loglevel=INFO --concurrency=2
     depends_on:
-      - api
       - db
       - redis
-    volumes:
-      - ./app:/app/app
-      - ./app/uploads:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
+      - REDIS_URL=redis://redis:6379/0
+
+  worker:
+    build: .
+    # This command is now correct and points to your central celery_app.py file
+    command: celery -A app.celery_app worker --loglevel=info
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
+      - REDIS_URL=redis://redis:6379/0
 
 volumes:
-  dbdata:
+  postgres_data:

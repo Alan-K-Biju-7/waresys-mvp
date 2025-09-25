@@ -69,7 +69,6 @@
 </head>
 <body>
 
-<!-- Login (fake) -->
 <div id="loginWrap">
   <div class="card login-card p-3">
     <h4 class="fw-bold mb-2 neon">Waresys Login</h4>
@@ -90,7 +89,6 @@
   </div>
 </div>
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg sticky-top">
   <div class="container-fluid px-3">
     <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="#"><i class="bi bi-box-seam"></i> Waresys</a>
@@ -103,7 +101,6 @@
   </div>
 </nav>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
   <div class="small-muted mb-2">Navigation</div>
   <ul class="nav nav-pills flex-column gap-2" id="sideNav">
@@ -120,27 +117,25 @@
   </div>
 </div>
 
-<!-- CONTENT -->
 <div class="content">
 
-  <!-- DASHBOARD -->
   <section id="dashboard" class="section active">
     <div class="d-flex flex-wrap align-items-end justify-content-between">
       <div>
         <h2 class="fw-bold neon mb-1">Inventory Overview</h2>
-        <div class="small-muted">Real-time visibility of stock, bills, and vendors (demo)</div>
+        <div class="small-muted">Real-time visibility of stock, bills, and vendors</div>
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-outline"><i class="bi bi-download me-1"></i>Export</button>
-        <button class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New Bill</button>
+        <button class="btn btn-primary" onclick="document.querySelector('a[data-target=bills]').click()"><i class="bi bi-plus-circle me-1"></i>New Bill</button>
       </div>
     </div>
 
     <div class="row g-3 mt-1">
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Total SKUs</div><div id="kSkus" class="fs-3 fw-semibold">326</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Stock Qty</div><div id="kStock" class="fs-3 fw-semibold">3,940</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Pending Bills</div><div id="kPend" class="fs-3 fw-semibold">3</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Vendors</div><div id="kVend" class="fs-3 fw-semibold">18</div></div></div>
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Total SKUs</div><div id="kSkus" class="fs-3 fw-semibold">...</div></div></div>
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Stock Qty</div><div id="kStock" class="fs-3 fw-semibold">...</div></div></div>
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Pending Bills</div><div id="kPend" class="fs-3 fw-semibold">...</div></div></div>
+      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Vendors</div><div id="kVend" class="fs-3 fw-semibold">...</div></div></div>
     </div>
 
     <div class="row g-4 mt-1">
@@ -167,22 +162,18 @@
     <div class="card p-3 mt-4">
       <div class="d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Recent Bills / Stock Updates</h5>
-        <div class="small-muted">Auto-updated by OCR (demo)</div>
+        <div class="small-muted">Auto-updated by OCR</div>
       </div>
       <div class="table-responsive mt-3">
         <table class="table align-middle">
           <thead><tr><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
           <tbody id="billTable">
-            <tr><td>INV-1001</td><td>Alpha Traders</td><td>2025-09-20</td><td>12</td><td>₹ 48,700</td><td><span class="chip chip-ok">Processed</span></td></tr>
-            <tr><td>INV-1002</td><td>Delta Ceramics</td><td>2025-09-21</td><td>8</td><td>₹ 23,950</td><td><span class="chip chip-warn">Pending</span></td></tr>
-            <tr><td>INV-1003</td><td>RAK Distributors</td><td>2025-09-21</td><td>5</td><td>₹ 15,320</td><td><span class="chip chip-warn">Pending</span></td></tr>
-          </tbody>
+            </tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <!-- PRODUCTS -->
   <section id="products" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Products</h2><div class="small-muted">Add / Search / Update</div></div>
@@ -202,15 +193,12 @@
         <table class="table align-middle">
           <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Stock</th><th>Price</th><th></th></tr></thead>
           <tbody id="prodTable">
-            <tr><td>AUTO-1A2B3C</td><td>Tiles 600x600</td><td>Tiles</td><td>120</td><td>₹ 245.00</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-            <tr><td>AUTO-4D5E6F</td><td>Sanitaryware Basin</td><td>Sanitaryware</td><td>80</td><td>₹ 1,200.00</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-          </tbody>
+            </tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <!-- VENDORS -->
   <section id="vendors" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Vendors</h2><div class="small-muted">Manage supplier profiles</div></div>
@@ -221,15 +209,12 @@
         <table class="table align-middle">
           <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Bills</th><th></th></tr></thead>
           <tbody id="vendTable">
-            <tr><td>Alpha Traders</td><td>alpha@ex.com</td><td>+91 98765 43210</td><td>132</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-            <tr><td>Delta Ceramics</td><td>delta@ex.com</td><td>+91 91234 56789</td><td>88</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-          </tbody>
+             </tbody>
         </table>
       </div>
     </div>
   </section>
 
-  <!-- BILLS & OCR -->
   <section id="bills" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Bills & OCR</h2><div class="small-muted">Upload → Extract → Verify → Update stock</div></div>
@@ -249,13 +234,6 @@
             <button id="btnOCR" class="btn btn-primary"><i class="bi bi-cpu me-1"></i>Process OCR</button>
             <div class="progress" style="height:10px; display:none;"><div id="pb" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%; background:linear-gradient(90deg,var(--brand2),var(--brand))"></div></div>
           </div>
-          <div class="small-muted mt-3">Extracted (preview)</div>
-          <div class="border rounded-3 p-2" style="border-color:rgba(126,155,255,.2)!important;">
-            <div class="d-flex justify-content-between small"><span class="text-secondary">Vendor</span><span id="pvVendor">—</span></div>
-            <div class="d-flex justify-content-between small"><span class="text-secondary">Bill No</span><span id="pvBill">—</span></div>
-            <div class="d-flex justify-content-between small"><span class="text-secondary">Date</span><span id="pvDate">—</span></div>
-            <div class="d-flex justify-content-between small"><span class="text-secondary">Total</span><span>₹ <span id="pvTotal">—</span></span></div>
-          </div>
         </div>
       </div>
 
@@ -269,42 +247,35 @@
             <table class="table align-middle">
               <thead><tr><th></th><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
               <tbody id="ocrTable">
-                <tr><td><input type="checkbox"></td><td>INV-1004</td><td>RAK Distributors</td><td>2025-09-21</td><td>7</td><td>₹ 21,400</td><td><span class="chip chip-warn">Pending</span></td></tr>
-                <tr><td><input type="checkbox"></td><td>INV-1005</td><td>Somany Supply</td><td>2025-09-21</td><td>9</td><td>₹ 31,200</td><td><span class="chip chip-warn">Pending</span></td></tr>
-              </tbody>
+                </tbody>
             </table>
           </div>
-          <div class="small-muted">Admin can verify OCR & lock to DB (demo).</div>
+          <div class="small-muted">Select processed bills and click Approve to update stock.</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- REPORTS -->
   <section id="reports" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Reports</h2><div class="small-muted">Download or publish summaries</div></div>
       <button id="btnPublish" class="btn btn-primary"><i class="bi bi-send-check me-1"></i>Publish Report</button>
     </div>
-    <div class="row g-3 mt-1">
-      <div class="col-lg-6"><div class="card p-3"><h5 class="mb-2">Top Categories</h5><canvas id="repCat"></canvas></div></div>
-      <div class="col-lg-6"><div class="card p-3"><h5 class="mb-2">Bills Trend</h5><canvas id="repBills"></canvas></div></div>
-    </div>
+     <div class="card p-3 mt-3">More reports coming soon.</div>
   </section>
 
-  <!-- ADMIN -->
   <section id="admin" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Admin & Roles</h2><div class="small-muted">Create users, assign roles</div></div>
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalUser"><i class="bi bi-person-plus me-1"></i>New User</button>
     </div>
     <div class="card p-3 mt-3">
-      <div class="table-responsive">
+        <div class="table-responsive">
         <table class="table align-middle">
           <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            <tr><td>Bijoy</td><td>bijoy@waresys.app</td><td><span class="chip chip-ok">Admin</span></td><td>Active</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-            <tr><td>Anu</td><td>anu@waresys.app</td><td><span class="chip chip-warn">Manager</span></td><td>Active</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
+            <tr><td>Admin User</td><td>admin@waresys.app</td><td><span class="chip chip-ok">Admin</span></td><td>Active</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
+            <tr><td>Manager User</td><td>manager@waresys.app</td><td><span class="chip chip-warn">Manager</span></td><td>Active</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -313,7 +284,6 @@
 
 </div>
 
-<!-- MODALS -->
 <div class="modal fade" id="modalProduct" tabindex="-1">
   <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
     <div class="modal-header"><h5 class="modal-title">Add Product</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
@@ -348,23 +318,6 @@
   </div></div>
 </div>
 
-<div class="modal fade" id="modalUser" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
-    <div class="modal-header"><h5 class="modal-title">Create User</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">
-      <div class="row g-2">
-        <div class="col-md-6"><input class="form-control" placeholder="Name"></div>
-        <div class="col-md-6"><input class="form-control" placeholder="Email"></div>
-        <div class="col-md-6">
-          <select class="form-select"><option>Admin</option><option>Manager</option><option>Viewer</option></select>
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" data-bs-dismiss="modal">Create</button></div>
-  </div></div>
-</div>
-
-<!-- TOAST -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
   <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert"><div class="d-flex">
     <div class="toast-body"><i class="bi bi-check-circle-fill me-2"></i><span id="toastMsg">Action completed</span></div>
@@ -372,7 +325,6 @@
   </div></div>
 </div>
 
-<!-- TOUR -->
 <div id="tourMask" class="tour-mask"></div>
 <div id="tourBox" class="tour-box" style="display:none"><div id="tourText">Step</div><div class="tour-arrow"></div>
   <div class="mt-2 d-flex justify-content-end gap-2">
@@ -385,14 +337,14 @@
 <script>
   // ---------- SPA Nav ----------
   const sections = document.querySelectorAll('.section');
-  document.querySelectorAll('#sideNav .nav-link').forEach(a=>{
-    a.addEventListener('click', e=>{
+  document.querySelectorAll('#sideNav .nav-link').forEach(a => {
+    a.addEventListener('click', e => {
       e.preventDefault();
-      document.querySelectorAll('#sideNav .nav-link').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('#sideNav .nav-link').forEach(x => x.classList.remove('active'));
       a.classList.add('active');
       const id = a.dataset.target;
-      sections.forEach(s=>s.classList.toggle('active', s.id===id));
-      window.scrollTo({top:0, behavior:'smooth'});
+      sections.forEach(s => s.classList.toggle('active', s.id === id));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
 
@@ -401,200 +353,53 @@
   const btnLogin = document.getElementById('btnLogin');
   const btnLoginAdmin = document.getElementById('btnLoginAdmin');
   const btnLogout = document.getElementById('btnLogout');
-  btnLogin.onclick = ()=>{ loginWrap.style.display='none'; document.querySelectorAll('.admin-only').forEach(x=>x.classList.add('d-none')); };
-  btnLoginAdmin.onclick = ()=>{ loginWrap.style.display='none'; document.querySelectorAll('.admin-only').forEach(x=>x.classList.remove('d-none')); };
-  btnLogout.onclick = ()=>{ loginWrap.style.display='flex'; };
+  
+  function onLoginSuccess() {
+      loginWrap.style.display = 'none';
+      initializeApi(); // This will now load all data
+  }
 
-  // ---------- Charts ----------
+  btnLogin.onclick = () => {
+      document.querySelectorAll('.admin-only').forEach(x => x.classList.add('d-none'));
+      onLoginSuccess();
+  };
+  btnLoginAdmin.onclick = () => {
+      document.querySelectorAll('.admin-only').forEach(x => x.classList.remove('d-none'));
+      onLoginSuccess();
+  };
+  btnLogout.onclick = () => { loginWrap.style.display = 'flex'; };
+
+  // ---------- Charts (Initialized here, data loaded via API) ----------
   const donut = new Chart(document.getElementById('donut'), {
-    type:'doughnut',
-    data:{ labels:['Tiles','Sanitaryware','Cement','Steel','Adhesives'], datasets:[{ data:[26000,14000,9000,8000,4990] }]},
-    options:{ cutout:'65%', plugins:{ legend:{ position:'bottom', labels:{ color:'#cfd6ff' }}} }
+    type: 'doughnut',
+    data: { labels: [], datasets: [{ data: [] }] },
+    options: { cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#cfd6ff' } } } }
   });
   const bar = new Chart(document.getElementById('bar'), {
-    type:'bar',
-    data:{ labels:['Wk1','Wk2','Wk3','Wk4'], datasets:[
-      { label:'Stock In', data:[50,75,60,90]},
-      { label:'Stock Out', data:[30,40,35,70]}
-    ]},
-    options:{ plugins:{ legend:{ position:'bottom', labels:{ color:'#cfd6ff' }}}, scales:{ y:{beginAtZero:true, ticks:{color:'#cfd6ff'}}, x:{ticks:{color:'#cfd6ff'}} } }
-  });
-  const repCat = new Chart(document.getElementById('repCat'), {
-    type:'pie',
-    data:{ labels:['Tiles','Sanitaryware','Cement','Steel','Adhesives'], datasets:[{ data:[42,23,14,12,9] }]},
-    options:{ plugins:{ legend:{ position:'bottom', labels:{ color:'#cfd6ff' }}} }
-  });
-  const repBills = new Chart(document.getElementById('repBills'), {
-    type:'line',
-    data:{ labels:['Apr','May','Jun','Jul','Aug','Sep'], datasets:[{ label:'Bills', data:[95,110,120,136,142,158], fill:true, tension:.35 }]},
-    options:{ plugins:{ legend:{ position:'bottom', labels:{ color:'#cfd6ff' }}}, scales:{ x:{ticks:{color:'#cfd6ff'}}, y:{ticks:{color:'#cfd6ff'}} } }
+    type: 'bar',
+    data: {
+      labels: ['Wk1', 'Wk2', 'Wk3', 'Wk4'], datasets: [
+        { label: 'Stock In', data: [50, 75, 60, 90], backgroundColor: 'rgba(125, 245, 255, 0.6)' },
+        { label: 'Stock Out', data: [30, 40, 35, 70], backgroundColor: 'rgba(155, 125, 255, 0.6)' }
+      ]
+    },
+    options: { plugins: { legend: { position: 'bottom', labels: { color: '#cfd6ff' } } }, scales: { y: { beginAtZero: true, ticks: { color: '#cfd6ff' } }, x: { ticks: { color: '#cfd6ff' } } } }
   });
 
-  // ---------- OCR Demo ----------
-  const dz = document.getElementById('dz'), file = document.getElementById('file');
-  dz.onclick = ()=> file.click();
-  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.style.borderColor='var(--brand)'; });
-  dz.addEventListener('dragleave', ()=> dz.style.borderColor='rgba(126,155,255,.35)');
-  dz.addEventListener('drop', e=>{ e.preventDefault(); file.files = e.dataTransfer.files; dz.style.borderColor='rgba(126,155,255,.35)' });
-
-  const btnOCR = document.getElementById('btnOCR'), pbWrap = document.querySelector('#bills .progress'), pb = document.getElementById('pb');
-  const pvVendor = document.getElementById('pvVendor'), pvBill = document.getElementById('pvBill'), pvDate = document.getElementById('pvDate'), pvTotal = document.getElementById('pvTotal');
-  const toast = new bootstrap.Toast(document.getElementById('toast')); const toastMsg = document.getElementById('toastMsg');
-
-  btnOCR.onclick = ()=>{
-    btnOCR.disabled = true; pbWrap.style.display='block'; pb.style.width='0%';
-    let pct = 0; const t = setInterval(()=>{
-      pct += Math.random()*18+8; if(pct>=100)pct=100; pb.style.width=pct+'%';
-      if(pct===100){ clearInterval(t); setTimeout(()=>{
-        pbWrap.style.display='none'; btnOCR.disabled = false;
-        // Mock extracted details:
-        const id = Math.floor(Math.random()*900)+110, items = Math.floor(Math.random()*8)+4;
-        const total = (Math.floor(Math.random()*70000)+15000).toLocaleString('en-IN');
-        const today = new Date().toISOString().slice(0,10);
-        pvVendor.textContent='CERA Distributors'; pvBill.textContent='INV-'+id; pvDate.textContent=today; pvTotal.textContent=total;
-
-        // Update dashboard KPIs + donut + table
-        bump('kStock', items*10); bump('kPend', -1);
-        donut.data.datasets[0].data[0] += Math.floor(Math.random()*900)+200; donut.update();
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>INV-${id}</td><td>CERA Distributors</td><td>${today}</td><td>${items}</td><td>₹ ${total}</td><td><span class="chip chip-ok">Processed</span></td>`;
-        document.getElementById('billTable').prepend(tr);
-
-        toastMsg.textContent = 'OCR completed. Bill saved & stock updated (demo).';
-        toast.show();
-      },250);}
-    },220);
-  };
-
-    document.getElementById('btnApprove').onclick = async ()=>{
-    const rows = Array.from(document.querySelectorAll('#ocrTable tr'));
-    const targets = rows
-      .filter(r => r.querySelector('input[type=checkbox]')?.checked)
-      .map(r => ({ id: r.getAttribute('data-bill-id'), tr: r }))
-      .filter(x => x.id);
-
-    if (targets.length === 0){
-      toastMsg.textContent = 'No rows selected';
-      toast.show();
-      return;
-    }
-
-    let ok = 0, fail = 0;
-
-    for (const t of targets){
-      try{
-        const r = await fetch(`${API}/bills/${t.id}/confirm`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ bill_type: 'PURCHASE' })
-        });
-        if(!r.ok) throw new Error(await r.text());
-        ok++;
-
-        // fetch the fresh bill to reflect final status
-        const rb = await fetch(`${API}/bills/${t.id}`);
-        const bill = await rb.json();
-        const chipClass = (bill.status === "CONFIRMED") ? 'chip-ok' : 'chip-warn';
-        t.tr.querySelector('td:last-child').innerHTML = `<span class="chip ${chipClass}">${bill.status}</span>`;
-        t.tr.querySelector('input[type=checkbox]').checked = false;
-      }catch(e){
-        console.error('Approve failed for bill', t.id, e);
-        fail++;
-      }
-    }
-
-    // refresh KPIs + recent bills from server truth
-    await Promise.all([loadDashboard(), loadRecentBills()]);
-
-    const msg = `Approved ${ok} bill(s)` + (fail? `, ${fail} failed`: '');
-    toastMsg.textContent = msg;
-    toast.show();
-  };
-
-  // Publish report
-  document.getElementById('btnPublish').onclick = ()=>{ toastMsg.textContent='Report generated & published (demo).'; toast.show(); };
-
-  // Add product/vendor
-  document.getElementById('btnAddProd').onclick = ()=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>AUTO-${Math.random().toString(16).slice(2,8).toUpperCase()}</td><td>New Product</td><td>Tiles</td><td>15</td><td>₹ 250.00</td><td><button class="btn btn-outline btn-sm">Edit</button></td>`;
-    document.getElementById('prodTable').prepend(tr);
-    bump('kSkus', 1);
-    toastMsg.textContent='Product created (demo).'; toast.show();
-  };
-  document.getElementById('btnAddVend').onclick = ()=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>New Vendor</td><td>new@ex.com</td><td>+91 90000 00000</td><td>0</td><td><button class="btn btn-outline btn-sm">Edit</button></td>`;
-    document.getElementById('vendTable').prepend(tr);
-    bump('kVend', 1);
-    toastMsg.textContent='Vendor added (demo).'; toast.show();
-  };
-
-  function bump(id, delta){
-    const el = document.getElementById(id);
-    const val = parseInt(el.textContent.replace(/[, ]/g,''),10)||0;
-    const to = Math.max(0,val+delta);
-    el.textContent = to.toLocaleString('en-IN');
-  }
-
-  // ---------- Guided Tour ----------
-  const tourSteps = [
-    { sel:'#dashboard .card', text:'Dashboard gives instant KPIs: SKUs, stock, pending bills, vendors.' },
-    { sel:'#donut', text:'Donut shows stock by category. OCR updates these numbers live.' },
-    { sel:'#bar', text:'Weekly stock movement—Stock In vs Out for quick trends.' },
-    { sel:'#bills .dropzone', text:'Upload bills here. Click Process OCR to simulate extraction.' },
-    { sel:'#ocrTable', text:'Verify/approve OCR results before locking them in.' },
-    { sel:'#products', text:'Manage products: add/search/update (demo adds a new row).' },
-    { sel:'#vendors', text:'Manage vendors: maintain contacts and traceability.' },
-    { sel:'#reports', text:'One-click “Publish Report” for stakeholders.' },
-    { sel:'.admin-only', text:'(Admin only) Role-based access—create users & assign roles.' }
-  ];
-  const tourMask = document.getElementById('tourMask');
-  const tourBox = document.getElementById('tourBox');
-  const tourText = document.getElementById('tourText');
-  const tourPrev = document.getElementById('tourPrev');
-  const tourNext = document.getElementById('tourNext');
-  let tourIndex = 0;
-
-  function showStep(i){
-    const step = tourSteps[i];
-    // navigate to target page if needed
-    const targetSection = document.querySelector(step.sel)?.closest('.section');
-    if(targetSection && !targetSection.classList.contains('active')){
-      document.querySelector(`#sideNav .nav-link[data-target="${targetSection.id}"]`)?.click();
-    }
-    requestAnimationFrame(()=>{
-      const el = document.querySelector(step.sel);
-      if(!el){ tourEnd(); return; }
-      const r = el.getBoundingClientRect();
-      const top = r.top + window.scrollY - 12;
-      const left = r.left + window.scrollX;
-      tourText.textContent = step.text;
-      tourMask.style.display='block';
-      tourBox.style.display='block';
-      tourBox.style.top = (top - tourBox.offsetHeight - 16) + 'px';
-      tourBox.style.left = (left + 12) + 'px';
-      window.scrollTo({ top: top - 120, behavior:'smooth' });
-    });
-  }
-  function tourEnd(){
-    tourMask.style.display='none';
-    tourBox.style.display='none';
-    tourIndex = 0;
-  }
-  document.getElementById('btnStartTour').onclick = ()=>{ tourIndex=0; showStep(tourIndex); };
-  tourPrev.onclick = ()=>{ tourIndex = Math.max(0, tourIndex-1); showStep(tourIndex); };
-  tourNext.onclick = ()=>{
-    tourIndex++;
-    if(tourIndex >= tourSteps.length) tourEnd();
-    else showStep(tourIndex);
-  };
-    (() => {
+  // =======================================================
+  // =========== API & DYNAMIC LOGIC STARTS HERE ===========
+  // =======================================================
+  
+  function initializeApi() {
+    
     // ====== CONFIG ======
     const API = localStorage.WARESYS_API || "http://localhost:8000";
-    const INR = (n)=> Number(n||0).toLocaleString('en-IN');
+    
+    const INR = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const toast = new bootstrap.Toast(document.getElementById('toast'));
+    const toastMsg = document.getElementById('toastMsg');
 
-    // Refs already defined by your existing script
+    // ====== DOM REFS ======
     const kSkus = document.getElementById('kSkus');
     const kStock = document.getElementById('kStock');
     const kPend = document.getElementById('kPend');
@@ -602,262 +407,192 @@
     const billTable = document.getElementById('billTable');
     const prodTable = document.getElementById('prodTable');
     const vendTable = document.getElementById('vendTable');
+    const ocrTable = document.getElementById('ocrTable');
 
-    // OCR preview
+    const dz = document.getElementById('dz'), fileInput = document.getElementById('file');
+    dz.onclick = () => fileInput.click();
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--brand)'; });
+    dz.addEventListener('dragleave', () => dz.style.borderColor = 'rgba(126,155,255,.35)');
+    dz.addEventListener('drop', e => { e.preventDefault(); fileInput.files = e.dataTransfer.files; dz.style.borderColor = 'rgba(126,155,255,.35)' });
+
     const btnOCR = document.getElementById('btnOCR');
-    const pbWrap = document.querySelector('#bills .progress');
-    const pb = document.getElementById('pb');
-    const pvVendor = document.getElementById('pvVendor');
-    const pvBill = document.getElementById('pvBill');
-    const pvDate = document.getElementById('pvDate');
-    const pvTotal = document.getElementById('pvTotal');
-    const toast = new bootstrap.Toast(document.getElementById('toast'));
-    const toastMsg = document.getElementById('toastMsg');
-    const file = document.getElementById('file');
+    const btnApprove = document.getElementById('btnApprove');
 
-    // Helpers
-    async function jget(url){
-        const r = await fetch(url);
-        if(!r.ok) throw new Error(await r.text());
-        return r.json();
-    }
-    async function jpost(url, body){
-        const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-        if(!r.ok) throw new Error(await r.text());
-        return r.json();
-    }
+    // ====== DATA FETCHING FUNCTIONS ======
+    async function loadDashboard() {
+        try {
+            const res = await fetch(`${API}/dashboard/summary`);
+            if (!res.ok) throw new Error('Failed to fetch dashboard data');
+            const data = await res.json();
 
-    function setKPI(el, val){ el.textContent = INR(val); }
-    function bump(el, delta){
-        const v = parseInt((el.textContent||"0").replace(/[, ]/g,''),10)||0;
-        setKPI(el, Math.max(0, v + delta));
-    }
+            kSkus.textContent = data.products_total.toLocaleString('en-IN');
+            kStock.textContent = data.stock_total_qty.toLocaleString('en-IN');
+            kPend.textContent = data.bills_pending.toLocaleString('en-IN');
 
-    // ====== Load Dashboard & Donut ======
-    async function loadDashboard(){
-        try{
-        const d = await jget(`${API}/api/dashboard/summary`);
-        setKPI(kSkus, d.products_total);
-        setKPI(kStock, d.stock_total_qty);
-        setKPI(kPend, d.bills_pending);
-        setKPI(kVend, d.vendors_total);
-
-        if (window.donut && Array.isArray(d.category_breakdown)){
-            const labels = d.category_breakdown.map(x=>x.category);
-            const values = d.category_breakdown.map(x=>x.qty);
-            donut.data.labels = labels;
-            donut.data.datasets[0].data = values;
+            donut.data.labels = data.category_breakdown.map(c => c.category);
+            donut.data.datasets[0].data = data.category_breakdown.map(c => c.qty);
             donut.update();
+        } catch (e) {
+            console.error(e);
+            toastMsg.textContent = 'Error loading dashboard. Is the backend running?';
+            toast.show();
         }
-        }catch(e){
-        console.warn("Dashboard load failed, using demo:", e);
-        }
+    }
+    
+    async function loadRecentBills() {
+        try {
+            const res = await fetch(`${API}/bills?limit=5`);
+            const bills = await res.json();
+            billTable.innerHTML = bills.map(b => `
+                <tr>
+                    <td>${b.bill_no || 'N/A'}</td>
+                    <td>${b.party_name || 'N/A'}</td>
+                    <td>${b.bill_date}</td>
+                    <td>${b.lines.length}</td>
+                    <td>₹ ${INR(b.total)}</td>
+                    <td><span class="chip ${b.status === 'PROCESSED' || b.status === 'CONFIRMED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
+                </tr>
+            `).join('');
+        } catch (e) { console.error(e); }
     }
 
-    // ====== Recent Bills Table ======
-    async function loadRecentBills(){
-        try{
-        const rows = await jget(`${API}/api/bills/recent`);
-        billTable.innerHTML = rows.map(r => `
-            <tr><td>${r.bill_no}</td><td>${r.vendor}</td><td>${r.date}</td>
-            <td>${r.items}</td><td>₹ ${INR(r.total)}</td>
-            <td><span class="chip ${r.status==='Processed'?'chip-ok':'chip-warn'}">${r.status}</span></td></tr>
-        `).join("");
-        }catch(e){
-        console.warn("Bills load failed, keeping demo:", e);
-        }
+    async function loadProducts() {
+        try {
+            const res = await fetch(`${API}/products`);
+            const products = await res.json();
+            prodTable.innerHTML = products.map(p => `
+                <tr>
+                    <td>${p.sku}</td>
+                    <td>${p.name}</td>
+                    <td>${p.category || 'N/A'}</td>
+                    <td>${p.stock_qty}</td>
+                    <td>₹ ${INR(p.price)}</td>
+                    <td><button class="btn btn-outline btn-sm">Edit</button></td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error(e); }
     }
 
-    // ====== Products ======
-    async function loadProducts(){
-        try{
-        const rows = await jget(`${API}/api/products`);
-        prodTable.innerHTML = rows.map(p => `
-            <tr><td>${p.sku||''}</td><td>${p.name}</td><td>${p.category||''}</td>
-            <td>${p.stock||0}</td><td>₹ ${INR(p.price||0)}</td>
-            <td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-        `).join("");
-        }catch(e){ console.warn("Products load failed, keeping demo:", e); }
+    async function loadVendors() {
+        try {
+            const res = await fetch(`${API}/vendors`);
+            const vendors = await res.json();
+            kVend.textContent = vendors.length; // Update dashboard KPI
+            vendTable.innerHTML = vendors.map(v => `
+                <tr>
+                    <td>${v.name}</td>
+                    <td>${v.email || 'N/A'}</td>
+                    <td>${v.phone || 'N/A'}</td>
+                    <td>0</td> <td><button class="btn btn-outline btn-sm">Edit</button></td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error(e); }
     }
-    document.getElementById('btnAddProd').onclick = async ()=>{
-        try{
-        const p = { name:"New Product", category:"Tiles", stock:15, price:250 };
-        await jpost(`${API}/api/products`, p);
-        await loadProducts();
-        bump(kSkus, 1);
-        toastMsg.textContent='Product created'; toast.show();
-        }catch(e){
-        console.error(e); toastMsg.textContent='Create product failed'; toast.show();
+    
+    async function loadOcrInbox() {
+        try {
+            const res = await fetch(`${API}/bills?limit=20`);
+            const bills = await res.json();
+            ocrTable.innerHTML = bills
+                .filter(b => b.status === 'PENDING' || b.status === 'PROCESSED')
+                .map(b => `
+                <tr data-bill-id="${b.id}">
+                    <td><input type="checkbox"></td>
+                    <td>${b.bill_no || 'N/A'}</td>
+                    <td>${b.party_name || 'N/A'}</td>
+                    <td>${b.bill_date}</td>
+                    <td>${b.lines.length}</td>
+                    <td>₹ ${INR(b.total)}</td>
+                    <td><span class="chip ${b.status === 'PROCESSED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
+                </tr>
+            `).join('');
+        } catch(e) { console.error(e); }
+    }
+
+
+    // ====== EVENT HANDLERS ======
+    btnOCR.onclick = async () => {
+        if (!fileInput.files.length) {
+            toastMsg.textContent = 'Please select a file to upload.';
+            toast.show();
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        btnOCR.disabled = true;
+        const pbWrap = document.querySelector('#bills .progress'), pb = document.getElementById('pb');
+        pbWrap.style.display = 'block'; pb.style.width = '50%';
+
+        try {
+            const res = await fetch(`${API}/bills/ocr`, { method: 'POST', body: formData });
+            if (!res.ok) {
+                 const err = await res.json();
+                 throw new Error(err.detail || 'Upload failed');
+            }
+            const result = await res.json();
+            pb.style.width = '100%';
+            
+            toastMsg.textContent = result.message;
+            toast.show();
+            await loadOcrInbox();
+
+        } catch (e) {
+            console.error(e);
+            toastMsg.textContent = `Error: ${e.message}`;
+            toast.show();
+        } finally {
+            setTimeout(() => {
+                pbWrap.style.display = 'none';
+                btnOCR.disabled = false;
+            }, 500);
         }
     };
+    
+    btnApprove.onclick = async () => {
+        const targets = Array.from(ocrTable.querySelectorAll('tr'))
+            .filter(r => r.querySelector('input[type=checkbox]')?.checked)
+            .map(r => ({ id: r.dataset.billId, tr: r }));
 
-    // ====== Vendors ======
-    async function loadVendors(){
-        try{
-        const rows = await jget(`${API}/api/vendors`);
-        vendTable.innerHTML = rows.map(v => `
-            <tr><td>${v.name}</td><td>${v.email||''}</td><td>${v.phone||''}</td>
-            <td>${v.bills||0}</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-        `).join("");
-        }catch(e){ console.warn("Vendors load failed, keeping demo:", e); }
-    }
-    document.getElementById('btnAddVend').onclick = async ()=>{
-        try{
-        await jpost(`${API}/api/vendors`, {name:"New Vendor", email:"new@ex.com", phone:"+91 90000 00000"});
-        await loadVendors();
-        bump(kVend, 1);
-        toastMsg.textContent='Vendor added'; toast.show();
-        }catch(e){
-        console.error(e); toastMsg.textContent='Add vendor failed'; toast.show();
+        if (targets.length === 0) {
+            toastMsg.textContent = 'No rows selected for approval.';
+            toast.show();
+            return;
         }
-    };
 
-    // ====== OCR Upload & Approve ======
-  btnOCR.onclick = async ()=>{
-  if(!file.files || !file.files[0]){ alert("Choose a PDF/image bill first."); return; }
+        let ok = 0, fail = 0;
+        for (const t of targets) {
+            try {
+                const r = await fetch(`${API}/bills/${t.id}/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ bill_type: 'PURCHASE' })
+                });
+                if (!r.ok) throw new Error(await r.text());
+                ok++;
+                t.tr.querySelector('td:last-child').innerHTML = `<span class="chip chip-ok">CONFIRMED</span>`;
+                t.tr.querySelector('input[type=checkbox]').checked = false;
+            } catch (e) {
+                console.error('Approve failed for bill', t.id, e);
+                fail++;
+            }
+        }
+        
+        await Promise.all([loadDashboard(), loadRecentBills()]);
 
-  // UI: show progress bar while uploading
-  btnOCR.disabled = true;
-  pbWrap.style.display='block';
-  pb.style.width='10%';
-
-  try{
-    // 1) Upload to your real OCR route
-    const fd = new FormData();
-    fd.append('file', file.files[0]);
-    // (Optional) these two are supported by your backend form:
-    // fd.append('party_name',''); fd.append('bill_no',''); fd.append('bill_date','YYYY-MM-DD');
-
-    let r = await fetch(`${API}/bills/upload`, { method:'POST', body: fd });
-    if(!r.ok){ throw new Error(await r.text()); }
-    const ocrAck = await r.json();               // { bill_id, message, ... }
-    const billId = ocrAck.bill_id;
-
-    // 2) Poll for parsed bill
-    const poll = async (id)=>{
-      for(let i=0;i<20;i++){                     // ~20 tries
-        await new Promise(res=>setTimeout(res, i<3? 800 : 1500));   // gentle backoff
-        const rr = await fetch(`${API}/bills/${id}`);
-        if(!rr.ok) throw new Error(await rr.text());
-        const bill = await rr.json();
-        // bill.status could be "PENDING" / "PROCESSED" / "CONFIRMED"
-        if (bill && bill.lines && bill.lines.length >= 0) return bill;
-      }
-      throw new Error("Timed out waiting for bill parsing");
-    };
-
-    pb.style.width='65%';
-    const bill = await poll(billId);
-    pb.style.width='90%';
-
-    // 3) Fill the preview
-    const vendorName = (bill.vendor && bill.vendor.name) || bill.party_name || '—';
-    const itemsCount = (bill.lines && bill.lines.length) || 0;
-    pvVendor.textContent = vendorName;
-    pvBill.textContent   = bill.bill_no || `BILL-${bill.id}`;
-    pvDate.textContent   = (bill.bill_date || '').toString().slice(0,10);
-    pvTotal.textContent  = INR(bill.total || 0);
-
-    // 4) Update Dashboard & Recent Bills (from server truth)
-    await Promise.all([loadDashboard(), loadRecentBills()]);
-
-    // 5) Seed/Update OCR Inbox row (so it can be selected for approval)
-    //    If your parsing sets status "PENDING" or "PROCESSED", we’ll show it;
-    //    row keeps the bill_id in a data attribute for approval.
-    const inbox = document.getElementById('ocrTable');
-    const existing = inbox.querySelector(`tr[data-bill-id="${billId}"]`);
-    const statusText = bill.status || (bill.needs_review ? "Pending Review" : "Pending");
-    const statusChip = (statusText === "CONFIRMED") ? 'chip-ok' : 'chip-warn';
-    const rowHtml = `
-      <tr data-bill-id="${billId}">
-        <td><input type="checkbox"></td>
-        <td>${bill.bill_no || `BILL-${billId}`}</td>
-        <td>${vendorName}</td>
-        <td>${(bill.bill_date || '').toString().slice(0,10)}</td>
-        <td>${itemsCount}</td>
-        <td>₹ ${INR(bill.total || 0)}</td>
-        <td><span class="chip ${statusChip}">${statusText}</span></td>
-      </tr>`;
-    if (existing) existing.outerHTML = rowHtml; else inbox.insertAdjacentHTML('afterbegin', rowHtml);
-
-    toastMsg.textContent = 'OCR uploaded. Parsing queued.';
-    toast.show();
-    pb.style.width='100%';
-  }catch(e){
-    console.error(e);
-    toastMsg.textContent = 'OCR upload failed';
-    toast.show();
-  }finally{
-    pbWrap.style.display='none';
-    btnOCR.disabled = false;
-  }
- };
-
-
-        document.getElementById('btnApprove').onclick = async ()=>{
-      const rows = Array.from(document.querySelectorAll('#ocrTable tr'));
-      const targets = rows
-        .filter(r => r.querySelector('input[type=checkbox]')?.checked)
-        .map(r => ({ id: r.getAttribute('data-bill-id'), tr: r }))
-        .filter(x => x.id);
-
-      if (targets.length === 0){
-        toastMsg.textContent = 'No rows selected';
+        toastMsg.textContent = `Approved ${ok} bill(s)` + (fail ? `, ${fail} failed` : '');
         toast.show();
-        return;
-      }
-
-      let ok = 0, fail = 0;
-
-      for (const t of targets){
-        try{
-          const r = await fetch(`${API}/bills/${t.id}/confirm`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ bill_type: 'PURCHASE' })
-          });
-          if(!r.ok) throw new Error(await r.text());
-          ok++;
-
-          const rb = await fetch(`${API}/bills/${t.id}`);
-          const bill = await rb.json();
-          const chipClass = (bill.status === "CONFIRMED") ? 'chip-ok' : 'chip-warn';
-          t.tr.querySelector('td:last-child').innerHTML = `<span class="chip ${chipClass}">${bill.status}</span>`;
-          t.tr.querySelector('input[type=checkbox]').checked = false;
-        }catch(e){
-          console.error('Approve failed for bill', t.id, e);
-          fail++;
-        }
-      }
-
-      await Promise.all([loadDashboard(), loadRecentBills()]);
-      const msg = `Approved ${ok} bill(s)` + (fail? `, ${fail} failed`: '');
-      toastMsg.textContent = msg;
-      toast.show();
     };
-
-
-    // ====== Publish (simple) ======
-    document.getElementById('btnPublish').onclick = async ()=>{
-        try{ await jpost(`${API}/api/reports/publish`, {}); toastMsg.textContent='Report published'; toast.show(); }
-        catch(e){ console.error(e); toastMsg.textContent='Publish failed'; toast.show(); }
-    };
-
-    // ====== Boot ======
-    (async function boot(){
-        await loadDashboard();
-        await loadRecentBills();
-        await loadProducts();
-        await loadVendors();
-    })();
-
-    })();
-
+    
+    // Initial data load for all sections
+    loadDashboard();
+    loadRecentBills();
+    loadProducts();
+    loadVendors();
+    loadOcrInbox();
+  }
 </script>
-<script>
-  // Point the UI to your backend API
-  localStorage.WARESYS_API = "http://localhost:8000";
-</script>
-
 </body>
 </html>

@@ -1,18 +1,17 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-SQLAlchemy==2.0.32
-psycopg2-binary==2.9.9
-pydantic==2.8.2
-python-multipart==0.0.9
-celery==5.4.0
-redis==5.0.7
-pdfplumber==0.11.4
-pdf2image==1.17.0
-pytesseract==0.3.13
-opencv-python-headless==4.10.0.84
-Pillow==10.4.0
-rapidfuzz==3.9.6
-dateparser==1.2.0
-alembic==1.14.0
-python-dotenv==1.0.1
-jinja2 
+# --- Core API Framework ---
+fastapi
+uvicorn[standard]
+python-dotenv
+python-multipart
+
+# --- Database ---
+sqlalchemy
+alembic
+psycopg[binary]  # Replaces the old psycopg2-binary for modern Python compatibility
+
+# --- Background Tasks & OCR ---
+celery
+redis
+pytesseract
+pdf2image
+poppler-utils
