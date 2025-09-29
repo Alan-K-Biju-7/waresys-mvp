@@ -1,42 +1,58 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  db:
-    image: postgres:13
+  api:
+    build: .
+    container_name: waresys_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
+      - REDIS_URL=redis://redis:6379/0
+      - UPLOAD_DIR=/app/uploads
+      - PYTHONUNBUFFERED=1
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - .:/app
+      - ./app/uploads:/app/uploads
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    container_name: waresys_worker
+    command: celery -A app.celery_app:celery_app worker -l info --pool=solo
+    environment:
+      - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - UPLOAD_DIR=/app/uploads
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - .:/app
+      - ./app/uploads:/app/uploads
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15
+    container_name: waresys_db
     environment:
       - POSTGRES_USER=waresys
       - POSTGRES_PASSWORD=waresys
       - POSTGRES_DB=waresys
     ports:
       - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
 
   redis:
-    image: redis:6.2-alpine
-
-  api:
-    build: .
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    image: redis:7
+    container_name: waresys_redis
     ports:
-      - "8000:8000"
-    depends_on:
-      - db
-      - redis
-    environment:
-      - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
-      - REDIS_URL=redis://redis:6379/0
-
-  worker:
-    build: .
-    # This command is now correct and points to your central celery_app.py file
-    command: celery -A app.celery_app worker --loglevel=info
-    depends_on:
-      - db
-      - redis
-    environment:
-      - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
-      - REDIS_URL=redis://redis:6379/0
+      - "6379:6379"
 
 volumes:
-  postgres_data:
+  db-data:

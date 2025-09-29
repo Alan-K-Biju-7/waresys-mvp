@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime,date
+from datetime import datetime, date
 
 class ProductIn(BaseModel):
     sku: str
@@ -28,13 +28,12 @@ class OCRResult(BaseModel):
     party_name: str | None = None
     bill_no: str | None = None
     bill_date: str | None = None
-    due_date: str | None = None        # NEW
-    po_number: str | None = None       # NEW
-    total: float | None = None         # NEW
+    due_date: str | None = None
+    po_number: str | None = None
+    total: float | None = None
     lines: List[ParsedLine]
     needs_review: bool
     message: str
-
 
 class ConfirmRequest(BaseModel):
     bill_type: str
@@ -43,7 +42,7 @@ class BillCreate(BaseModel):
     bill_type: str
     party_name: Optional[str] = None
     bill_no: str
-    bill_date: Optional[str] = None   # Accept raw string
+    bill_date: Optional[str] = None
     source: str
     status: str
     uploaded_doc: str
@@ -54,9 +53,7 @@ class ReviewOut(BaseModel):
     status: str
     issues: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
+    class Config: from_attributes = True
 
 class ReviewResolve(BaseModel):
     notes: Optional[str] = None
@@ -72,8 +69,7 @@ class VendorCreate(VendorBase):
 
 class VendorOut(VendorBase):
     id: int
-    class Config:
-        from_attributes = True
+    class Config: from_attributes = True
 
 class BillLineOut(BaseModel):
     id: int
@@ -81,14 +77,9 @@ class BillLineOut(BaseModel):
     description_raw: Optional[str] = None
     qty: float
     unit_price: Optional[float] = None
-    line_total: Optional[float] = None   # ✅ add this
+    line_total: Optional[float] = None
     ocr_confidence: float = 0.0
-
-
-    class Config:
-        from_attributes = True
-
-
+    class Config: from_attributes = True
 
 class BillOut(BaseModel):
     id: int
@@ -98,10 +89,7 @@ class BillOut(BaseModel):
     status: str
     source: str
     uploaded_doc: Optional[str] = None
-    vendor: Optional[VendorOut] = None  # nested vendor
+    vendor: Optional[VendorOut] = None
     lines: List[BillLineOut] = []
     needs_review: bool = False
-
-    class Config:
-        from_attributes = True
-
+    class Config: from_attributes = True

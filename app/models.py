@@ -1,78 +1,130 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Numeric, Date, Text, UniqueConstraint, DateTime, Integer
+# app/models.py
+from __future__ import annotations
+from sqlalchemy import (
+    Column, Integer, String, Date, ForeignKey, Numeric, Text, DateTime
+)
+from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
-from datetime import date, datetime
-from .db import Base
 
-class Category(Base):
-    __tablename__ = "categories"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    parent_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
+Base = declarative_base()
 
+# ---------------- Products ----------------
 class Product(Base):
     __tablename__ = "products"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    sku: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id"))
-    uom: Mapped[str] = mapped_column(String, default="pcs", nullable=False)
-    reorder_point: Mapped[float] = mapped_column(Numeric(12,2), default=0)
+    id = Column(Integer, primary_key=True)
+    sku = Column(String(64), unique=True, index=True, nullable=True)
+    name = Column(String(256), index=True, nullable=False)
+    category = Column(String(128), nullable=True)
+    price = Column(Numeric(12, 2), nullable=True)
+    stock_qty = Column(Numeric(12, 3), nullable=True, default=0)
+    reorder_point = Column(Numeric(12, 3), nullable=True, default=0)
+
+    def __repr__(self) -> str:
+        return f"<Product {self.id} {self.name}>"
+
+# ---------------- Vendors -----------------
+class Vendor(Base):
+    __tablename__ = "vendors"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(256), unique=True, index=True, nullable=False)
+    gst_number = Column(String(32), nullable=True)
+    address = Column(Text, nullable=True)
+    contact = Column(String(64), nullable=True)     # phone
+    email = Column(String(256), nullable=True)
+
+    bills = relationship("Bill", back_populates="vendor", cascade="all,delete-orphan")
+
+# ---------------- Bills (legacy OCR) ------
+class Bill(Base):
+    __tablename__ = "bills"
+    id = Column(Integer, primary_key=True)
+    bill_no = Column(String(64), index=True, nullable=True)
+    bill_date = Column(Date, nullable=True)
+    party_name = Column(String(256), nullable=True)
+    status = Column(String(32), nullable=False, default="PENDING")
+    source = Column(String(32), nullable=True)              # e.g. OCR
+    uploaded_doc = Column(String(512), nullable=True)
+    total = Column(Numeric(12, 2), nullable=True)
+
+    vendor_id = Column(Integer, ForeignKey("vendors.id"), nullable=True)
+    vendor = relationship("Vendor", back_populates="bills")
+
+    lines = relationship("BillLine", back_populates="bill", cascade="all,delete-orphan")
 
 class BillLine(Base):
     __tablename__ = "bill_lines"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    bill_id: Mapped[int] = mapped_column(ForeignKey("bills.id", ondelete="CASCADE"))
-    product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"))
-    description_raw: Mapped[str | None] = mapped_column(Text)
-    qty: Mapped[float] = mapped_column(Numeric(12,3), nullable=False)
-    unit_price: Mapped[float | None] = mapped_column(Numeric(12,2))
-    line_total: Mapped[float | None] = mapped_column(Numeric(12,2))
-    ocr_confidence: Mapped[float | None] = mapped_column(Numeric(4,3), default=0)
+    id = Column(Integer, primary_key=True)
+    bill_id = Column(Integer, ForeignKey("bills.id"), nullable=False, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
 
-class StockLedger(Base):
-    __tablename__ = "stock_ledger"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
-    txn_type: Mapped[str] = mapped_column(String, nullable=False)    # PURCHASE|SALE|ADJUST
-    qty_change: Mapped[float] = mapped_column(Numeric(12,3), nullable=False)
-    ref_bill_id: Mapped[int | None] = mapped_column(ForeignKey("bills.id"))
-    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    notes: Mapped[str | None] = mapped_column(Text)
+    description_raw = Column(Text, nullable=True)
+    qty = Column(Numeric(12, 3), nullable=True, default=0)
+    unit_price = Column(Numeric(12, 2), nullable=True, default=0)
+    line_total = Column(Numeric(12, 2), nullable=True, default=0)
+    ocr_confidence = Column(Numeric(4, 3), nullable=True, default=0)
 
+    bill = relationship("Bill", back_populates="lines")
+    product = relationship("Product")
+
+# ---------------- Review Queue -----------
 class ReviewQueue(Base):
     __tablename__ = "review_queue"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    bill_id: Mapped[int] = mapped_column(ForeignKey("bills.id", ondelete="CASCADE"))
-    issues: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String, default="OPEN")  # OPEN|RESOLVED
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-class Vendor(Base):
-    __tablename__ = "vendors"
-    
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    gst_number: Mapped[str | None] = mapped_column(String, unique=True, nullable=True)
-    address: Mapped[str | None] = mapped_column(String, nullable=True)
-    contact: Mapped[str | None] = mapped_column(String, nullable=True)
+    id = Column(Integer, primary_key=True)
+    bill_id = Column(Integer, ForeignKey("bills.id"), nullable=False, index=True)
+    status = Column(String(16), nullable=False, default="OPEN")
+    issues = Column(Text, nullable=True)
 
-    bills = relationship("Bill", back_populates="vendor")
+# ---------------- Stock Ledger -----------
+class StockLedger(Base):
+    __tablename__ = "stock_ledger"
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False, index=True)
+    qty_change = Column(Numeric(12, 3), nullable=False)
+    txn_type = Column(String(32), nullable=False)           # e.g. PURCHASE, ADJUSTMENT
+    ref_bill_id = Column(Integer, ForeignKey("bills.id"), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+# -------------- Vendor Invoices (new) ----
+class Invoice(Base):
+    """
+    Storage for richer vendor invoices parsed from PDFs (separate from Bill).
+    Kept flexible/nullable so it won't break existing data.
+    """
+    __tablename__ = "invoices"
+    id = Column(Integer, primary_key=True)
 
-class Bill(Base):
-    __tablename__ = "bills"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    bill_type: Mapped[str] = mapped_column(String, nullable=False)  # PURCHASE|SALE
-    party_name: Mapped[str | None] = mapped_column(String)
-    bill_no: Mapped[str] = mapped_column(String, nullable=False)
-    bill_date: Mapped[date] = mapped_column(Date, nullable=False)
-    source: Mapped[str] = mapped_column(String, nullable=False)      # OCR|MANUAL
-    status: Mapped[str] = mapped_column(String, default="PENDING")   # PENDING|CONFIRMED|VOID
-    uploaded_doc: Mapped[str | None] = mapped_column(String)
-    total: Mapped[float | None] = mapped_column(Numeric(12, 2))
+    vendor_name = Column(String(256), nullable=True)
+    voucher_no = Column(String(64), nullable=True)
+    invoice_date = Column(Date, nullable=True)
 
-    vendor_id: Mapped[int | None] = mapped_column(ForeignKey("vendors.id"))
-    vendor: Mapped["Vendor"] = relationship("Vendor", back_populates="bills")
+    bill_to = Column(Text, nullable=True)
+    ship_to = Column(Text, nullable=True)
 
-    __table_args__ = (UniqueConstraint("party_name", "bill_no", name="uq_party_billno"),)
-    lines = relationship("BillLine", backref="bill", cascade="all, delete-orphan")
+    subtotal = Column(Numeric(12, 2), nullable=True)
+    cgst = Column(Numeric(12, 2), nullable=True)
+    sgst = Column(Numeric(12, 2), nullable=True)
+    igst = Column(Numeric(12, 2), nullable=True)
+    other_charges = Column(Numeric(12, 2), nullable=True)
+    total = Column(Numeric(12, 2), nullable=True)
+
+    raw_text = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    lines = relationship("InvoiceLine", back_populates="invoice", cascade="all,delete-orphan")
+
+class InvoiceLine(Base):
+    __tablename__ = "invoice_lines"
+    id = Column(Integer, primary_key=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False, index=True)
+
+    description = Column(Text, nullable=True)
+    hsn = Column(String(16), nullable=True)
+    uom = Column(String(16), nullable=True)
+    qty = Column(Numeric(12, 3), nullable=True)
+    rate = Column(Numeric(12, 2), nullable=True)
+    discount_pct = Column(Numeric(5, 2), nullable=True)
+    amount = Column(Numeric(12, 2), nullable=True)
+    sku = Column(String(64), nullable=True)
+
+    invoice = relationship("Invoice", back_populates="lines")
