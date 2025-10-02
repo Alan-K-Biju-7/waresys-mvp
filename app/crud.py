@@ -1,16 +1,32 @@
 # app/crud.py
+import os
 from datetime import datetime, date
-from sqlalchemy.orm import Session
-from sqlalchemy import select, func
 from typing import Optional
 from decimal import Decimal
+
+from sqlalchemy import select, func
+from sqlalchemy.orm import Session
+
 from . import models, schemas
 
-# ---------- Products ----------
+# ============================================================
+# Duplicate policy for Bills
+#   DUP_POLICY = "reuse" (default) | "suffix" | "error"
+#   - reuse  : return existing bill (no 409, good for Swagger testing)
+#   - suffix : create a new bill with bill_no suffixed by -DUP-N
+#   - error  : strict mode; surface duplicate to the API (your /bills/ocr will 409)
+# ============================================================
+DUP_POLICY = os.getenv("DUP_POLICY", "reuse").strip().lower()
+
+
+# ============================================================
+# Products
+# ============================================================
 def get_product_by_sku(db: Session, sku: str):
     return db.execute(
         select(models.Product).where(models.Product.sku == sku)
     ).scalar_one_or_none()
+
 
 def search_products_by_name(db: Session, q: str, limit: int = 25):
     pattern = f"%{q}%"
@@ -24,6 +40,7 @@ def search_products_by_name(db: Session, q: str, limit: int = 25):
         .all()
     )
 
+
 def create_product(db: Session, **data):
     if data.get("category_id") in (0, "0", ""):
         data["category_id"] = None
@@ -34,7 +51,9 @@ def create_product(db: Session, **data):
     return obj
 
 
-# ---------- Vendor helpers (new/expanded) ----------
+# ============================================================
+# Vendor helpers
+# ============================================================
 def _merge_field(obj, field: str, value):
     """Only set field if incoming value is non-empty and current value is blank/N/A."""
     if value is None:
@@ -44,6 +63,7 @@ def _merge_field(obj, field: str, value):
     old = getattr(obj, field, None)
     if old in (None, "", "N/A"):
         setattr(obj, field, value)
+
 
 def get_or_create_vendor(
     db: Session,
@@ -70,7 +90,7 @@ def get_or_create_vendor(
     if not vendor and name:
         vendor = (
             db.query(Vendor)
-            .filter(func.lower(Vendor.name) == name.lower())
+            .filter(func.lower(Vendor.name) == (name or "").lower())
             .first()
         )
 
@@ -83,9 +103,9 @@ def get_or_create_vendor(
             email=email,
         )
         db.add(vendor)
-        db.flush()  # avoid an early commit; caller can commit
+        db.flush()  # no commit; caller will commit
 
-    # Merge newly parsed info into existing record
+    # Merge newly parsed info into existing record (avoid unique-name collisions)
     if gst_number and not vendor.gst_number:
         vendor.gst_number = gst_number
     _merge_field(vendor, "address", address)
@@ -94,9 +114,10 @@ def get_or_create_vendor(
 
     return vendor
 
+
 def attach_vendor_to_bill(db: Session, bill: models.Bill, vendor_info: Optional[dict]):
     """
-    Given parsed vendor_info, ensure a Vendor exists and set bill.vendor_id.
+    Ensure a Vendor exists and set bill.vendor_id.
     vendor_info shape: { name, gst_number, address, contact, email }
     """
     if not vendor_info:
@@ -113,7 +134,9 @@ def attach_vendor_to_bill(db: Session, bill: models.Bill, vendor_info: Optional[
     return bill
 
 
-# ---------- Vendors (existing endpoints support) ----------
+# ============================================================
+# Vendors (endpoints support)
+# ============================================================
 def create_vendor(db: Session, vendor: schemas.VendorCreate):
     db_vendor = models.Vendor(**vendor.dict())
     db.add(db_vendor)
@@ -121,50 +144,136 @@ def create_vendor(db: Session, vendor: schemas.VendorCreate):
     db.refresh(db_vendor)
     return db_vendor
 
+
 def get_vendors(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Vendor).offset(skip).limit(limit).all()
+
 
 def get_vendor(db: Session, vendor_id: int):
     return db.query(models.Vendor).filter(models.Vendor.id == vendor_id).first()
 
 
-# ---------- Bills & Lines ----------
-def create_bill(db: Session, bill_in: schemas.BillCreate, allow_update: bool = False):
-    data = bill_in.dict()
-    bill_date_raw = data.get("bill_date")
-
-    if isinstance(bill_date_raw, str):
-        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y"):
+# ============================================================
+# Bills & Lines
+# ============================================================
+def _parse_bill_date(value) -> date:
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%d-%m-%y"):
             try:
-                data["bill_date"] = datetime.strptime(bill_date_raw, fmt).date()
-                break
+                return datetime.strptime(value, fmt).date()
             except ValueError:
-                pass
-        if not isinstance(data.get("bill_date"), date):
-            data["bill_date"] = date.today()
-    elif bill_date_raw is None:
-        data["bill_date"] = date.today()
+                continue
+    return date.today()
 
+
+def _create_bill_row(db: Session, data: dict, vendor_id: Optional[int]) -> models.Bill:
+    bill = models.Bill(
+        bill_no=data["bill_no"],
+        bill_date=_parse_bill_date(data.get("bill_date")),
+        party_name=data.get("party_name"),
+        status=data.get("status") or "PENDING",
+        source=data.get("source") or "OCR",
+        uploaded_doc=data.get("uploaded_doc"),
+        vendor_id=vendor_id,
+    )
+    db.add(bill)
+    db.commit()
+    db.refresh(bill)
+    return bill
+
+
+def create_bill(db: Session, bill_in: schemas.BillCreate, allow_update: bool = False):
+    """
+    Duplicate behavior is controlled by DUP_POLICY (env):
+      - reuse  : return existing bill object (no error)
+      - suffix : create new bill with bill_no suffixed by -DUP-N
+      - error  : return {"duplicate": True, ...} (your /bills/ocr will raise 409)
+    """
+    data = bill_in.dict()
+
+    # Bill model has no 'bill_type'
+    data.pop("bill_type", None)
+
+    # Normalize date
+    data["bill_date"] = _parse_bill_date(data.get("bill_date"))
+
+    # Try to find an existing bill for (party_name, bill_no)
     existing = (
         db.query(models.Bill)
-        .filter_by(party_name=data.get("party_name"), bill_no=data["bill_no"])
+        .filter(
+            models.Bill.party_name == data.get("party_name"),
+            models.Bill.bill_no == data["bill_no"],
+        )
         .first()
     )
-    if existing and not allow_update:
-        return {"duplicate": True, "message": "Duplicate bill exists"}
 
-    # Attach a vendor record (basic: by party_name for now; better info can be merged later in tasks)
+    # Attach vendor up-front (so both new and reused cases have vendor_id)
     vendor_id = None
     party_name = data.get("party_name")
     if party_name:
         v = get_or_create_vendor(db, name=party_name)
         vendor_id = v.id
 
-    bill = models.Bill(vendor_id=vendor_id, **data)
-    db.add(bill)
-    db.commit()
-    db.refresh(bill)
-    return {"bill": bill, "created": True}
+    # Existing row found
+    if existing and not allow_update:
+        if DUP_POLICY == "reuse":
+            # return existing (no duplicate flag -> API won't 409)
+            return {
+                "created": False,
+                "duplicate": False,
+                "message": "Duplicate reused",
+                "bill": existing,
+            }
+
+        if DUP_POLICY == "suffix":
+            # create another bill with a safe suffix
+            count = (
+                db.query(models.Bill)
+                .filter(
+                    models.Bill.party_name == data.get("party_name"),
+                    models.Bill.bill_no.like(f"{data['bill_no']}%"),
+                )
+                .count()
+            )
+            new_no = f"{data['bill_no']}-DUP-{count + 1}"
+            data_suffixed = dict(data, bill_no=new_no)
+            bill = _create_bill_row(db, data_suffixed, vendor_id)
+            return {
+                "created": True,
+                "duplicate": False,
+                "message": f"Duplicate created as {new_no}",
+                "bill": bill,
+            }
+
+        # strict mode
+        return {"duplicate": True, "message": "Duplicate bill exists", "bill": existing}
+
+    # Allow update: patch existing and return it
+    if existing and allow_update:
+        if data.get("uploaded_doc"):
+            existing.uploaded_doc = data["uploaded_doc"]
+        if data.get("bill_date"):
+            existing.bill_date = data["bill_date"]
+        if data.get("party_name"):
+            existing.party_name = data["party_name"]
+        if vendor_id:
+            existing.vendor_id = vendor_id
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return {
+            "created": False,
+            "duplicate": False,
+            "message": "Updated existing bill",
+            "bill": existing,
+        }
+
+    # Fresh create
+    bill = _create_bill_row(db, data, vendor_id)
+    return {"bill": bill, "created": True, "duplicate": False, "message": "Bill created"}
+
 
 def add_bill_line(db: Session, **data):
     l = models.BillLine(**data)
@@ -174,7 +283,9 @@ def add_bill_line(db: Session, **data):
     return l
 
 
-# ---------- Review Queue ----------
+# ============================================================
+# Review Queue
+# ============================================================
 def add_review(db: Session, bill_id: int, issues: Optional[str] = None):
     review = models.ReviewQueue(
         bill_id=bill_id, status="OPEN", issues=issues or "Requires manual review"
@@ -184,6 +295,7 @@ def add_review(db: Session, bill_id: int, issues: Optional[str] = None):
     db.refresh(review)
     return review
 
+
 def upsert_review_item(db: Session, *, bill_id: int, issues: str):
     existing = db.query(models.ReviewQueue).filter_by(bill_id=bill_id, status="OPEN").first()
     if existing:
@@ -191,6 +303,7 @@ def upsert_review_item(db: Session, *, bill_id: int, issues: str):
     else:
         db.add(models.ReviewQueue(bill_id=bill_id, issues=issues, status="OPEN"))
     db.commit()
+
 
 def get_reviews(db: Session, skip: int = 0, limit: int = 100):
     return (
@@ -201,8 +314,10 @@ def get_reviews(db: Session, skip: int = 0, limit: int = 100):
         .all()
     )
 
+
 def get_review(db: Session, review_id: int):
     return db.query(models.ReviewQueue).filter(models.ReviewQueue.id == review_id).first()
+
 
 def resolve_review(db: Session, review_id: int, notes: Optional[str] = None):
     review = db.query(models.ReviewQueue).filter(models.ReviewQueue.id == review_id).first()
@@ -216,7 +331,9 @@ def resolve_review(db: Session, review_id: int, notes: Optional[str] = None):
     return review
 
 
-# ---------- Stock / Ledger ----------
+# ============================================================
+# Stock / Ledger
+# ============================================================
 def add_ledger(
     db: Session,
     product_id: int,
@@ -238,7 +355,9 @@ def add_ledger(
     return row
 
 
-# ---------- Invoices (vendor OCR) ----------
+# ============================================================
+# Invoices (vendor OCR)
+# ============================================================
 def create_invoice_with_lines(db: Session, inv: dict) -> models.Invoice:
     invoice = models.Invoice(
         vendor_name=inv.get("vendor_name"),
@@ -271,6 +390,7 @@ def create_invoice_with_lines(db: Session, inv: dict) -> models.Invoice:
     db.flush()
     return invoice
 
+
 def upsert_product_and_add_stock(db: Session, desc: str, hsn: str | None, qty):
     prod = db.query(models.Product).filter(models.Product.name.ilike(desc)).first()
     if not prod:
@@ -286,36 +406,8 @@ def upsert_product_and_add_stock(db: Session, desc: str, hsn: str | None, qty):
     prod.stock_qty = (prod.stock_qty or 0) + (qty or 0)
     return prod
 
+
 def apply_stock_from_invoice(db: Session, invoice: models.Invoice):
     for line in invoice.lines:
         if (line.qty or 0) > 0:
             upsert_product_and_add_stock(db, line.description, line.hsn, line.qty)
-
-# Link/merge vendor info to a Bill (called from Celery after parsing)
-def attach_vendor_to_bill(db, bill, vdict: dict | None):
-    if not bill or not vdict:
-        return bill
-    name = (vdict.get("name") or bill.party_name or "").strip()
-    if not name:
-        return bill
-
-    vendor = db.query(models.Vendor).filter(models.Vendor.name == name).first()
-    if not vendor:
-        vendor = models.Vendor(name=name)
-
-    # update lightweight fields if present
-    if vdict.get("gst_number"):
-        vendor.gst_number = vdict["gst_number"]
-    if vdict.get("address"):
-        vendor.address = vdict["address"]
-    if vdict.get("contact"):
-        vendor.contact = vdict["contact"]
-    if vdict.get("email"):
-        vendor.email = vdict["email"]
-
-    db.add(vendor); db.flush()
-    bill.vendor_id = vendor.id
-    bill.party_name = name
-    db.add(bill)
-    return bill
-

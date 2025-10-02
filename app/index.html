@@ -8,31 +8,22 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
 <style>
-  :root{
-    --bg:#0c1020; --panel:#121630; --muted:#9aa4c7; --text:#e8ecff;
-    --brand:#6ea8ff; --brand2:#7df5ff; --vio:#9b7dff; --glass:rgba(255,255,255,.04);
-  }
+  :root{ --bg:#0c1020; --panel:#121630; --muted:#9aa4c7; --text:#e8ecff; --brand:#6ea8ff; --brand2:#7df5ff; --vio:#9b7dff; --glass:rgba(255,255,255,.04) }
   *{box-sizing:border-box}
-  body{
-    margin:0; background:
+  body{ margin:0; background:
       radial-gradient(1200px 600px at 85% -10%, rgba(109,87,255,.25), transparent 60%),
       radial-gradient(800px 400px at -10% 110%, rgba(0,186,255,.18), transparent 60%),
       linear-gradient(135deg,#0a0e1b 0%,#0c1020 35%,#0a0f24 100%);
-    color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto;
-  }
+    color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto }
   .neon{background:linear-gradient(90deg,var(--brand2),var(--brand),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
   .navbar{background:rgba(8,12,28,.7); backdrop-filter:blur(8px); border-bottom:1px solid rgba(126,155,255,.18)}
   .navbar .nav-link,.navbar .navbar-brand{color:var(--text)!important; opacity:.9}
   .nav-pills .nav-link.active{background:linear-gradient(90deg,var(--brand2),var(--brand)); color:#000!important}
-  .sidebar{
-    width:240px; min-height:100vh; position:fixed; top:56px; left:0; padding:18px 14px;
-    background:rgba(8,12,28,.55); border-right:1px solid rgba(126,155,255,.12); backdrop-filter: blur(8px);
-  }
+  .sidebar{ width:240px; min-height:100vh; position:fixed; top:56px; left:0; padding:18px 14px;
+    background:rgba(8,12,28,.55); border-right:1px solid rgba(126,155,255,.12); backdrop-filter: blur(8px) }
   .content{margin-left:240px; padding:22px}
-  .card{
-    background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.02));
-    border:1px solid rgba(126,155,255,.14); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.35)
-  }
+  .card{ background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.02));
+    border:1px solid rgba(126,155,255,.14); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.35)}
   .btn-primary{background:linear-gradient(90deg,var(--brand2),var(--brand)); border:0}
   .btn-outline{color:var(--text); border:1px solid rgba(126,155,255,.25)}
   .small-muted{color:var(--muted); font-size:.9rem}
@@ -42,33 +33,22 @@
   .chip-warn{background:rgba(255,193,7,.12); color:#ffd26a; border:1px solid rgba(255,193,7,.25)}
   .table > :not(caption) > * > *{background:transparent; color:var(--text); border-color:rgba(126,155,255,.14)}
   .table thead tr{background:rgba(126,155,255,.06)!important}
-  .section{display:none}
-  .section.active{display:block}
-  /* Login screen */
-  #loginWrap{
-    position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:
+  .section{display:none} .section.active{display:block}
+  #loginWrap{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:
       radial-gradient(500px 300px at 10% 10%, rgba(109,87,255,.25), transparent 60%),
-      linear-gradient(135deg,#0b0f21,#0a1026);
-    z-index:2000;
-  }
+      linear-gradient(135deg,#0b0f21,#0a1026); z-index:2000 }
   .login-card{width:380px}
-  /* Tour overlay */
-  .tour-mask{
-    position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter: blur(2px);
-    display:none; z-index:3000;
-  }
-  .tour-box{
-    position:fixed; max-width:340px; background:#101431; color:var(--text); border:1px solid rgba(126,155,255,.3);
-    padding:14px 14px 12px; border-radius:12px; z-index:3001; box-shadow:0 8px 24px rgba(0,0,0,.45)
-  }
-  .tour-arrow{position:absolute; width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;
-    border-top:10px solid #101431; bottom:-10px; left:22px}
+  .tour-mask{ position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter: blur(2px); display:none; z-index:3000 }
+  .tour-box{ position:fixed; max-width:340px; background:#101431; color:var(--text); border:1px solid rgba(126,155,255,.3);
+    padding:14px 14px 12px; border-radius:12px; z-index:3001; box-shadow:0 8px 24px rgba(0,0,0,.45) }
+  .tour-arrow{position:absolute; width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #101431; bottom:-10px; left:22px}
   .badge-soft{background:rgba(110,168,255,.12); color:#bcd2ff; border:1px solid rgba(110,168,255,.25)}
   @media (max-width: 992px){ .sidebar{position:static; width:100%; min-height:auto} .content{margin:0}}
 </style>
 </head>
 <body>
 
+<!-- Login -->
 <div id="loginWrap">
   <div class="card login-card p-3">
     <h4 class="fw-bold mb-2 neon">Waresys Login</h4>
@@ -89,6 +69,7 @@
   </div>
 </div>
 
+<!-- Topbar -->
 <nav class="navbar navbar-expand-lg sticky-top">
   <div class="container-fluid px-3">
     <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="#"><i class="bi bi-box-seam"></i> Waresys</a>
@@ -101,6 +82,7 @@
   </div>
 </nav>
 
+<!-- Sidebar -->
 <div class="sidebar">
   <div class="small-muted mb-2">Navigation</div>
   <ul class="nav nav-pills flex-column gap-2" id="sideNav">
@@ -119,6 +101,7 @@
 
 <div class="content">
 
+  <!-- Dashboard -->
   <section id="dashboard" class="section active">
     <div class="d-flex flex-wrap align-items-end justify-content-between">
       <div>
@@ -167,13 +150,13 @@
       <div class="table-responsive mt-3">
         <table class="table align-middle">
           <thead><tr><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
-          <tbody id="billTable">
-            </tbody>
+          <tbody id="billTable"></tbody>
         </table>
       </div>
     </div>
   </section>
 
+  <!-- Products -->
   <section id="products" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Products</h2><div class="small-muted">Add / Search / Update</div></div>
@@ -192,13 +175,13 @@
       <div class="table-responsive mt-3">
         <table class="table align-middle">
           <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Stock</th><th>Price</th><th></th></tr></thead>
-          <tbody id="prodTable">
-            </tbody>
+          <tbody id="prodTable"></tbody>
         </table>
       </div>
     </div>
   </section>
 
+  <!-- Vendors -->
   <section id="vendors" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Vendors</h2><div class="small-muted">Manage supplier profiles</div></div>
@@ -208,13 +191,13 @@
       <div class="table-responsive">
         <table class="table align-middle">
           <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Bills</th><th></th></tr></thead>
-          <tbody id="vendTable">
-             </tbody>
+          <tbody id="vendTable"></tbody>
         </table>
       </div>
     </div>
   </section>
 
+  <!-- Bills & OCR -->
   <section id="bills" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Bills & OCR</h2><div class="small-muted">Upload → Extract → Verify → Update stock</div></div>
@@ -232,7 +215,9 @@
           </div>
           <div class="d-grid gap-2 mt-3">
             <button id="btnOCR" class="btn btn-primary"><i class="bi bi-cpu me-1"></i>Process OCR</button>
-            <div class="progress" style="height:10px; display:none;"><div id="pb" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%; background:linear-gradient(90deg,var(--brand2),var(--brand))"></div></div>
+            <div class="progress" style="height:10px; display:none;">
+              <div id="pb" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%; background:linear-gradient(90deg,var(--brand2),var(--brand))"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -246,8 +231,7 @@
           <div class="table-responsive mt-2">
             <table class="table align-middle">
               <thead><tr><th></th><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
-              <tbody id="ocrTable">
-                </tbody>
+              <tbody id="ocrTable"></tbody>
             </table>
           </div>
           <div class="small-muted">Select processed bills and click Approve to update stock.</div>
@@ -256,6 +240,7 @@
     </div>
   </section>
 
+  <!-- Reports -->
   <section id="reports" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Reports</h2><div class="small-muted">Download or publish summaries</div></div>
@@ -264,13 +249,14 @@
      <div class="card p-3 mt-3">More reports coming soon.</div>
   </section>
 
+  <!-- Admin -->
   <section id="admin" class="section">
     <div class="d-flex justify-content-between align-items-end">
       <div><h2 class="fw-bold neon mb-1">Admin & Roles</h2><div class="small-muted">Create users, assign roles</div></div>
       <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalUser"><i class="bi bi-person-plus me-1"></i>New User</button>
     </div>
     <div class="card p-3 mt-3">
-        <div class="table-responsive">
+      <div class="table-responsive">
         <table class="table align-middle">
           <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
           <tbody>
@@ -284,40 +270,43 @@
 
 </div>
 
+<!-- Product Modal -->
 <div class="modal fade" id="modalProduct" tabindex="-1">
   <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
     <div class="modal-header"><h5 class="modal-title">Add Product</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
       <div class="row g-2">
-        <div class="col-md-6"><input class="form-control" placeholder="SKU (auto ok)"></div>
-        <div class="col-md-6"><input class="form-control" placeholder="Name"></div>
+        <div class="col-md-6"><input id="prodSku" class="form-control" placeholder="SKU (auto ok)"></div>
+        <div class="col-md-6"><input id="prodName" class="form-control" placeholder="Name"></div>
         <div class="col-md-6">
-          <select class="form-select">
+          <select id="prodCategory" class="form-select">
             <option>Tiles</option><option>Sanitaryware</option><option>Cement</option><option>Steel</option><option>Adhesives</option>
           </select>
         </div>
-        <div class="col-md-3"><input class="form-control" placeholder="Stock" value="10"></div>
-        <div class="col-md-3"><input class="form-control" placeholder="Price" value="250"></div>
+        <div class="col-md-3"><input id="prodStock" class="form-control" placeholder="Stock" value="10"></div>
+        <div class="col-md-3"><input id="prodPrice" class="form-control" placeholder="Price" value="250"></div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button><button id="btnAddProd" class="btn btn-primary" data-bs-dismiss="modal">Add</button></div>
   </div></div>
 </div>
 
+<!-- Vendor Modal -->
 <div class="modal fade" id="modalVendor" tabindex="-1">
   <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
     <div class="modal-header"><h5 class="modal-title">Add Vendor</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
       <div class="row g-2">
-        <div class="col-md-6"><input class="form-control" placeholder="Name"></div>
-        <div class="col-md-6"><input class="form-control" placeholder="Email"></div>
-        <div class="col-md-6"><input class="form-control" placeholder="Phone"></div>
+        <div class="col-md-6"><input id="vendName" class="form-control" placeholder="Name"></div>
+        <div class="col-md-6"><input id="vendEmail" class="form-control" placeholder="Email"></div>
+        <div class="col-md-6"><input id="vendPhone" class="form-control" placeholder="Phone"></div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button><button id="btnAddVend" class="btn btn-primary" data-bs-dismiss="modal">Add</button></div>
   </div></div>
 </div>
 
+<!-- Toast -->
 <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
   <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert"><div class="d-flex">
     <div class="toast-body"><i class="bi bi-check-circle-fill me-2"></i><span id="toastMsg">Action completed</span></div>
@@ -335,6 +324,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+  // ===== GLOBALS =====
+  const API = localStorage.WARESYS_API || "http://localhost:8000";
+  const INR = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  let toast = null, toastMsg = null;
+
   // ---------- SPA Nav ----------
   const sections = document.querySelectorAll('.section');
   document.querySelectorAll('#sideNav .nav-link').forEach(a => {
@@ -353,23 +347,28 @@
   const btnLogin = document.getElementById('btnLogin');
   const btnLoginAdmin = document.getElementById('btnLoginAdmin');
   const btnLogout = document.getElementById('btnLogout');
-  
+
   function onLoginSuccess() {
-      loginWrap.style.display = 'none';
-      initializeApi(); // This will now load all data
+    toast = new bootstrap.Toast(document.getElementById('toast'));
+    toastMsg = document.getElementById('toastMsg');
+    loginWrap.style.display = 'none';
+    initializeApi();
   }
 
   btnLogin.onclick = () => {
-      document.querySelectorAll('.admin-only').forEach(x => x.classList.add('d-none'));
-      onLoginSuccess();
+    document.querySelectorAll('.admin-only').forEach(x => x.classList.add('d-none'));
+    onLoginSuccess();
   };
   btnLoginAdmin.onclick = () => {
-      document.querySelectorAll('.admin-only').forEach(x => x.classList.remove('d-none'));
-      onLoginSuccess();
+    document.querySelectorAll('.admin-only').forEach(x => x.classList.remove('d-none'));
+    onLoginSuccess();
   };
-  btnLogout.onclick = () => { loginWrap.style.display = 'flex'; };
+  btnLogout.onclick = () => {
+    if (window._ocrPoll) clearInterval(window._ocrPoll);
+    loginWrap.style.display = 'flex';
+  };
 
-  // ---------- Charts (Initialized here, data loaded via API) ----------
+  // ---------- Charts (static config; data filled later) ----------
   const donut = new Chart(document.getElementById('donut'), {
     type: 'doughnut',
     data: { labels: [], datasets: [{ data: [] }] },
@@ -378,7 +377,8 @@
   const bar = new Chart(document.getElementById('bar'), {
     type: 'bar',
     data: {
-      labels: ['Wk1', 'Wk2', 'Wk3', 'Wk4'], datasets: [
+      labels: ['Wk1', 'Wk2', 'Wk3', 'Wk4'],
+      datasets: [
         { label: 'Stock In', data: [50, 75, 60, 90], backgroundColor: 'rgba(125, 245, 255, 0.6)' },
         { label: 'Stock Out', data: [30, 40, 35, 70], backgroundColor: 'rgba(155, 125, 255, 0.6)' }
       ]
@@ -389,17 +389,8 @@
   // =======================================================
   // =========== API & DYNAMIC LOGIC STARTS HERE ===========
   // =======================================================
-  
   function initializeApi() {
-    
-    // ====== CONFIG ======
-    const API = localStorage.WARESYS_API || "http://localhost:8000";
-    
-    const INR = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const toast = new bootstrap.Toast(document.getElementById('toast'));
-    const toastMsg = document.getElementById('toastMsg');
-
-    // ====== DOM REFS ======
+    // DOM refs
     const kSkus = document.getElementById('kSkus');
     const kStock = document.getElementById('kStock');
     const kPend = document.getElementById('kPend');
@@ -418,180 +409,179 @@
     const btnOCR = document.getElementById('btnOCR');
     const btnApprove = document.getElementById('btnApprove');
 
-    // ====== DATA FETCHING FUNCTIONS ======
+    // ---- Add Product modal handler
+    document.getElementById('btnAddProd').onclick = async () => {
+      const sku = document.getElementById('prodSku').value.trim();
+      const name = document.getElementById('prodName').value.trim();
+      const category = document.getElementById('prodCategory').value.trim();
+      const stock_qty = Number(document.getElementById('prodStock').value || 0);
+      const price = Number(document.getElementById('prodPrice').value || 0);
+      if (!name) { toastMsg.textContent = 'Name is required'; toast.show(); return; }
+      try {
+        const res = await fetch(`${API}/products`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ sku: sku || null, name, category: category || null, stock_qty, price })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        toastMsg.textContent = 'Product added'; toast.show();
+        await loadProducts(); await loadDashboard();
+      } catch(e){ console.error(e); toastMsg.textContent = 'Failed to add product'; toast.show(); }
+    };
+
+    // ---- Add Vendor modal handler
+    document.getElementById('btnAddVend').onclick = async () => {
+      const name = document.getElementById('vendName').value.trim();
+      const email = document.getElementById('vendEmail').value.trim();
+      const phone = document.getElementById('vendPhone').value.trim();
+      if (!name) { toastMsg.textContent = 'Vendor name is required'; toast.show(); return; }
+      try {
+        const res = await fetch(`${API}/vendors`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ name, email: email || null, phone: phone || null })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        toastMsg.textContent = 'Vendor added'; toast.show();
+        await loadVendors();
+      } catch(e){ console.error(e); toastMsg.textContent = 'Failed to add vendor'; toast.show(); }
+    };
+
+    // ---- data loaders
     async function loadDashboard() {
-        try {
-            const res = await fetch(`${API}/dashboard/summary`);
-            if (!res.ok) throw new Error('Failed to fetch dashboard data');
-            const data = await res.json();
-
-            kSkus.textContent = data.products_total.toLocaleString('en-IN');
-            kStock.textContent = data.stock_total_qty.toLocaleString('en-IN');
-            kPend.textContent = data.bills_pending.toLocaleString('en-IN');
-
-            donut.data.labels = data.category_breakdown.map(c => c.category);
-            donut.data.datasets[0].data = data.category_breakdown.map(c => c.qty);
-            donut.update();
-        } catch (e) {
-            console.error(e);
-            toastMsg.textContent = 'Error loading dashboard. Is the backend running?';
-            toast.show();
-        }
+      try {
+        const res = await fetch(`${API}/dashboard/summary`);
+        if (!res.ok) throw new Error('Failed to fetch dashboard data');
+        const data = await res.json();
+        kSkus.textContent = data.products_total.toLocaleString('en-IN');
+        kStock.textContent = data.stock_total_qty.toLocaleString('en-IN');
+        kPend.textContent = data.bills_pending.toLocaleString('en-IN');
+        donut.data.labels = data.category_breakdown.map(c => c.category);
+        donut.data.datasets[0].data = data.category_breakdown.map(c => c.qty);
+        donut.update();
+      } catch (e) {
+        console.error(e);
+        toastMsg.textContent = 'Error loading dashboard. Is the backend running?'; toast.show();
+      }
     }
-    
+
     async function loadRecentBills() {
-        try {
-            const res = await fetch(`${API}/bills?limit=5`);
-            const bills = await res.json();
-            billTable.innerHTML = bills.map(b => `
-                <tr>
-                    <td>${b.bill_no || 'N/A'}</td>
-                    <td>${b.party_name || 'N/A'}</td>
-                    <td>${b.bill_date}</td>
-                    <td>${b.lines.length}</td>
-                    <td>₹ ${INR(b.total)}</td>
-                    <td><span class="chip ${b.status === 'PROCESSED' || b.status === 'CONFIRMED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
-                </tr>
-            `).join('');
-        } catch (e) { console.error(e); }
+      try {
+        const res = await fetch(`${API}/bills?limit=5`);
+        const bills = await res.json();
+        billTable.innerHTML = bills.map(b => `
+          <tr>
+            <td>${b.bill_no || 'N/A'}</td>
+            <td>${b.party_name || 'N/A'}</td>
+            <td>${b.bill_date}</td>
+            <td>${b.lines.length}</td>
+            <td>₹ ${INR(b.total)}</td>
+            <td><span class="chip ${b.status === 'PROCESSED' || b.status === 'CONFIRMED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
+          </tr>`).join('');
+      } catch(e){ console.error(e); }
     }
 
     async function loadProducts() {
-        try {
-            const res = await fetch(`${API}/products`);
-            const products = await res.json();
-            prodTable.innerHTML = products.map(p => `
-                <tr>
-                    <td>${p.sku}</td>
-                    <td>${p.name}</td>
-                    <td>${p.category || 'N/A'}</td>
-                    <td>${p.stock_qty}</td>
-                    <td>₹ ${INR(p.price)}</td>
-                    <td><button class="btn btn-outline btn-sm">Edit</button></td>
-                </tr>
-            `).join('');
-        } catch(e) { console.error(e); }
+      try {
+        const res = await fetch(`${API}/products`);
+        const products = await res.json();
+        prodTable.innerHTML = products.map(p => `
+          <tr>
+            <td>${p.sku}</td>
+            <td>${p.name}</td>
+            <td>${p.category || 'N/A'}</td>
+            <td>${p.stock_qty}</td>
+            <td>₹ ${INR(p.price)}</td>
+            <td><button class="btn btn-outline btn-sm">Edit</button></td>
+          </tr>`).join('');
+      } catch(e){ console.error(e); }
     }
 
     async function loadVendors() {
-        try {
-            const res = await fetch(`${API}/vendors`);
-            const vendors = await res.json();
-            kVend.textContent = vendors.length; // Update dashboard KPI
-            vendTable.innerHTML = vendors.map(v => `
-                <tr>
-                    <td>${v.name}</td>
-                    <td>${v.email || 'N/A'}</td>
-                    <td>${v.phone || 'N/A'}</td>
-                    <td>0</td> <td><button class="btn btn-outline btn-sm">Edit</button></td>
-                </tr>
-            `).join('');
-        } catch(e) { console.error(e); }
+      try {
+        const res = await fetch(`${API}/vendors`);
+        const vendors = await res.json();
+        kVend.textContent = vendors.length;
+        vendTable.innerHTML = vendors.map(v => `
+          <tr>
+            <td>${v.name}</td>
+            <td>${v.email || 'N/A'}</td>
+            <td>${v.phone || 'N/A'}</td>
+            <td>0</td>
+            <td><button class="btn btn-outline btn-sm">Edit</button></td>
+          </tr>`).join('');
+      } catch(e){ console.error(e); }
     }
-    
+
     async function loadOcrInbox() {
-        try {
-            const res = await fetch(`${API}/bills?limit=20`);
-            const bills = await res.json();
-            ocrTable.innerHTML = bills
-                .filter(b => b.status === 'PENDING' || b.status === 'PROCESSED')
-                .map(b => `
-                <tr data-bill-id="${b.id}">
-                    <td><input type="checkbox"></td>
-                    <td>${b.bill_no || 'N/A'}</td>
-                    <td>${b.party_name || 'N/A'}</td>
-                    <td>${b.bill_date}</td>
-                    <td>${b.lines.length}</td>
-                    <td>₹ ${INR(b.total)}</td>
-                    <td><span class="chip ${b.status === 'PROCESSED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
-                </tr>
-            `).join('');
-        } catch(e) { console.error(e); }
+      try {
+        const res = await fetch(`${API}/bills?limit=20`);
+        const bills = await res.json();
+        ocrTable.innerHTML = bills
+          .filter(b => b.status === 'PENDING' || b.status === 'PROCESSED')
+          .map(b => `
+            <tr data-bill-id="${b.id}">
+              <td><input type="checkbox"></td>
+              <td>${b.bill_no || 'N/A'}</td>
+              <td>${b.party_name || 'N/A'}</td>
+              <td>${b.bill_date}</td>
+              <td>${b.lines.length}</td>
+              <td>₹ ${INR(b.total)}</td>
+              <td><span class="chip ${b.status === 'PROCESSED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
+            </tr>`).join('');
+      } catch(e){ console.error(e); }
     }
 
-
-    // ====== EVENT HANDLERS ======
+    // ---- events
     btnOCR.onclick = async () => {
-        if (!fileInput.files.length) {
-            toastMsg.textContent = 'Please select a file to upload.';
-            toast.show();
-            return;
-        }
-        
-        const file = fileInput.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-
-        btnOCR.disabled = true;
-        const pbWrap = document.querySelector('#bills .progress'), pb = document.getElementById('pb');
-        pbWrap.style.display = 'block'; pb.style.width = '50%';
-
-        try {
-            const res = await fetch(`${API}/bills/ocr`, { method: 'POST', body: formData });
-            if (!res.ok) {
-                 const err = await res.json();
-                 throw new Error(err.detail || 'Upload failed');
-            }
-            const result = await res.json();
-            pb.style.width = '100%';
-            
-            toastMsg.textContent = result.message;
-            toast.show();
-            await loadOcrInbox();
-
-        } catch (e) {
-            console.error(e);
-            toastMsg.textContent = `Error: ${e.message}`;
-            toast.show();
-        } finally {
-            setTimeout(() => {
-                pbWrap.style.display = 'none';
-                btnOCR.disabled = false;
-            }, 500);
-        }
+      if (!fileInput.files.length) { toastMsg.textContent = 'Please select a file to upload.'; toast.show(); return; }
+      const file = fileInput.files[0];
+      const formData = new FormData(); formData.append('file', file);
+      btnOCR.disabled = true;
+      const pbWrap = document.querySelector('#bills .progress'), pb = document.getElementById('pb');
+      pbWrap.style.display = 'block'; pb.style.width = '50%';
+      try {
+        const res = await fetch(`${API}/bills/ocr`, { method: 'POST', body: formData });
+        if (!res.ok) { const err = await res.json().catch(()=>({})); throw new Error(err.detail || 'Upload failed'); }
+        const result = await res.json();
+        pb.style.width = '100%';
+        toastMsg.textContent = result.message; toast.show();
+        await loadOcrInbox();
+      } catch (e) {
+        console.error(e);
+        toastMsg.textContent = `Error: ${e.message}`; toast.show();
+      } finally {
+        setTimeout(()=>{ pbWrap.style.display='none'; btnOCR.disabled=false; }, 500);
+      }
     };
-    
+
     btnApprove.onclick = async () => {
-        const targets = Array.from(ocrTable.querySelectorAll('tr'))
-            .filter(r => r.querySelector('input[type=checkbox]')?.checked)
-            .map(r => ({ id: r.dataset.billId, tr: r }));
-
-        if (targets.length === 0) {
-            toastMsg.textContent = 'No rows selected for approval.';
-            toast.show();
-            return;
-        }
-
-        let ok = 0, fail = 0;
-        for (const t of targets) {
-            try {
-                const r = await fetch(`${API}/bills/${t.id}/confirm`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bill_type: 'PURCHASE' })
-                });
-                if (!r.ok) throw new Error(await r.text());
-                ok++;
-                t.tr.querySelector('td:last-child').innerHTML = `<span class="chip chip-ok">CONFIRMED</span>`;
-                t.tr.querySelector('input[type=checkbox]').checked = false;
-            } catch (e) {
-                console.error('Approve failed for bill', t.id, e);
-                fail++;
-            }
-        }
-        
-        await Promise.all([loadDashboard(), loadRecentBills()]);
-
-        toastMsg.textContent = `Approved ${ok} bill(s)` + (fail ? `, ${fail} failed` : '');
-        toast.show();
+      const targets = Array.from(ocrTable.querySelectorAll('tr'))
+        .filter(r => r.querySelector('input[type=checkbox]')?.checked)
+        .map(r => ({ id: r.dataset.billId, tr: r }));
+      if (targets.length === 0) { toastMsg.textContent = 'No rows selected for approval.'; toast.show(); return; }
+      let ok=0, fail=0;
+      for (const t of targets) {
+        try {
+          const r = await fetch(`${API}/bills/${t.id}/confirm`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ bill_type:'PURCHASE' })
+          });
+          if (!r.ok) throw new Error(await r.text());
+          ok++; t.tr.querySelector('td:last-child').innerHTML = `<span class="chip chip-ok">CONFIRMED</span>`;
+          t.tr.querySelector('input[type=checkbox]').checked = false;
+        } catch(e){ console.error('Approve failed', t.id, e); fail++; }
+      }
+      await Promise.all([loadDashboard(), loadRecentBills()]);
+      toastMsg.textContent = `Approved ${ok} bill(s)` + (fail ? `, ${fail} failed` : ''); toast.show();
     };
-    
-    // Initial data load for all sections
-    loadDashboard();
-    loadRecentBills();
-    loadProducts();
-    loadVendors();
-    loadOcrInbox();
+
+    // ---- initial loads
+    loadDashboard(); loadRecentBills(); loadProducts(); loadVendors(); loadOcrInbox();
+
+    // ---- OCR inbox polling (bills tab only)
+    if (window._ocrPoll) clearInterval(window._ocrPoll);
+    window._ocrPoll = setInterval(() => {
+      if (document.getElementById('bills').classList.contains('active')) loadOcrInbox();
+    }, 5000);
   }
 </script>
 </body>

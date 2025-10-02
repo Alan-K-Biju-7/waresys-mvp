@@ -2,25 +2,24 @@ FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-
 WORKDIR /app
 
-# ✅ OCR system deps
+# System deps for OCR/PDF
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     poppler-utils \
     libglib2.0-0 libsm6 libxrender1 libxext6 \
  && rm -rf /var/lib/apt/lists/*
 
-# ✅ Install Python deps
+# Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ✅ Copy app code
+# App code
 COPY app /app/app
 
-# ✅ Ensure uploads dir exists
+# uploads dir
 RUN mkdir -p /app/uploads
 
 EXPOSE 8000
-# CMD is defined in docker-compose.yml
+# CMD via docker-compose

@@ -1,28 +1,33 @@
-version: "3.9"
-
 services:
   api:
     build: .
     container_name: waresys_api
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    ports:
-      - "8000:8000"
+    ports: ["8000:8000"]
     environment:
       - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
-      - REDIS_URL=redis://redis:6379/0
       - UPLOAD_DIR=/app/uploads
       - PYTHONUNBUFFERED=1
+      - JWT_SECRET=dev-change-me
+      - JWT_EXPIRE_MIN=60
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - OCR_SYNC=1                     # ✅ process OCR inline in the API for swagger demos
     volumes:
       - .:/app
       - ./app/uploads:/app/uploads
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [waresys_net]
 
   worker:
     build: .
     container_name: waresys_worker
-    command: celery -A app.celery_app:celery_app worker -l info --pool=solo
+    command: celery -A app.tasks:celery_app worker -l info --pool=solo  # ✅ correct Celery app path
     environment:
       - DATABASE_URL=postgresql+psycopg://waresys:waresys@db:5432/waresys
       - CELERY_BROKER_URL=redis://redis:6379/0
@@ -33,8 +38,12 @@ services:
       - .:/app
       - ./app/uploads:/app/uploads
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [waresys_net]
 
   db:
     image: postgres:15
@@ -43,16 +52,32 @@ services:
       - POSTGRES_USER=waresys
       - POSTGRES_PASSWORD=waresys
       - POSTGRES_DB=waresys
-    ports:
-      - "5432:5432"
+    ports: ["5432:5432"]
     volumes:
       - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [waresys_net]
 
   redis:
     image: redis:7
     container_name: waresys_redis
-    ports:
-      - "6379:6379"
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [waresys_net]
 
 volumes:
   db-data:
+
+networks:
+  waresys_net:
+    driver: bridge

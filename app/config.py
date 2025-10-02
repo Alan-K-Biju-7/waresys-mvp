@@ -1,9 +1,8 @@
-# app/config.py
 import os
 
 class Settings:
     def __init__(self):
-        # The connection string MUST use "+psycopg"
+        # Use "+psycopg" driver
         self.DATABASE_URL = os.getenv(
             "DATABASE_URL",
             "postgresql+psycopg://waresys:waresys@db:5432/waresys"

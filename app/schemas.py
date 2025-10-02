@@ -1,7 +1,10 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from __future__ import annotations
 from datetime import datetime, date
+from typing import Optional, List, Any
+from pydantic import BaseModel, Field, StringConstraints
+from typing_extensions import Annotated
 
+# ------ Products ------
 class ProductIn(BaseModel):
     sku: str
     name: str
@@ -11,8 +14,9 @@ class ProductIn(BaseModel):
 
 class ProductOut(ProductIn):
     id: int
-    class Config: from_attributes = True
+    model_config = {"from_attributes": True}
 
+# ------ OCR / Parsing ------
 class ParsedLine(BaseModel):
     description_raw: str
     qty: float
@@ -22,6 +26,8 @@ class ParsedLine(BaseModel):
     match_score: float = 0.0
     ocr_confidence: float = 0.0
     resolved_product_id: int | None = None
+    uom: str | None = None
+    hsn: str | None = None
 
 class OCRResult(BaseModel):
     bill_id: int
@@ -38,6 +44,7 @@ class OCRResult(BaseModel):
 class ConfirmRequest(BaseModel):
     bill_type: str
 
+# ------ Bills (create) ------
 class BillCreate(BaseModel):
     bill_type: str
     party_name: Optional[str] = None
@@ -47,30 +54,35 @@ class BillCreate(BaseModel):
     status: str
     uploaded_doc: str
 
+# ------ Review Queue ------
 class ReviewOut(BaseModel):
     id: int
     bill_id: int
     status: str
     issues: Optional[str] = None
     created_at: datetime
-    class Config: from_attributes = True
+    model_config = {"from_attributes": True}
 
 class ReviewResolve(BaseModel):
     notes: Optional[str] = None
 
+# ------ Vendors ------
 class VendorBase(BaseModel):
     name: str
-    gst_number: Optional[str] = None
-    address: Optional[str] = None
-    contact: Optional[str] = None
+    email: str | None = None
+    phone: str | None = None
+    gst_number: str | None = None
+    address: str | None = None
+    contact: str | None = None
 
 class VendorCreate(VendorBase):
     pass
 
 class VendorOut(VendorBase):
     id: int
-    class Config: from_attributes = True
+    model_config = {"from_attributes": True}
 
+# ------ Bill Lines ------
 class BillLineOut(BaseModel):
     id: int
     product_id: Optional[int] = None
@@ -79,8 +91,11 @@ class BillLineOut(BaseModel):
     unit_price: Optional[float] = None
     line_total: Optional[float] = None
     ocr_confidence: float = 0.0
-    class Config: from_attributes = True
+    uom: Optional[str] = None
+    hsn: Optional[str] = None
+    model_config = {"from_attributes": True}
 
+# ------ Bill (rich) ------
 class BillOut(BaseModel):
     id: int
     bill_no: str
@@ -90,6 +105,18 @@ class BillOut(BaseModel):
     source: str
     uploaded_doc: Optional[str] = None
     vendor: Optional[VendorOut] = None
-    lines: List[BillLineOut] = []
+    lines: List[BillLineOut] = Field(default_factory=list)
     needs_review: bool = False
-    class Config: from_attributes = True
+    model_config = {"from_attributes": True}
+
+# ------ Auth / Users ------
+Password72 = Annotated[str, StringConstraints(min_length=1, max_length=72)]
+
+class UserRegister(BaseModel):
+    email: str
+    password: Password72
+    role: str = "user"
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
