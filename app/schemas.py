@@ -96,6 +96,7 @@ class BillLineOut(BaseModel):
     model_config = {"from_attributes": True}
 
 # ------ Bill (rich) ------
+# app/schemas.py  (BillOut)
 class BillOut(BaseModel):
     id: int
     bill_no: str
@@ -107,7 +108,9 @@ class BillOut(BaseModel):
     vendor: Optional[VendorOut] = None
     lines: List[BillLineOut] = Field(default_factory=list)
     needs_review: bool = False
+    total: Optional[float] = None            # <-- add this
     model_config = {"from_attributes": True}
+
 
 # ------ Auth / Users ------
 Password72 = Annotated[str, StringConstraints(min_length=1, max_length=72)]

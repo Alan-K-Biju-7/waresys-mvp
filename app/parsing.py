@@ -4,6 +4,7 @@ import logging
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from decimal import Decimal
+from .vendor_detection import detect_vendor_from_lines
 
 logger = logging.getLogger(__name__)
 
@@ -366,3 +367,7 @@ def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
         )
 
     return data
+def detect_vendor_from_text(raw_text: str) -> dict:
+    """Split OCR text into lines and run vendor detector."""
+    lines = [ln.strip() for ln in (raw_text or "").splitlines() if ln.strip()]
+    return detect_vendor_from_lines(lines)

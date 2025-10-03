@@ -113,23 +113,25 @@ def _run_parsing_adapter(file_path: str, db: Session) -> Optional[Dict[str, Any]
         except Exception:
             logger.exception("[adapter] legacy_parse_invoice failed; trying OCR pipeline")
 
-    # Fallback: OCR text parser
+    # Fallback: OCR text parser -> build kv/vendor/lines
     if extract_text_from_pdf and parse_invoice_text:
         text = extract_text_from_pdf(file_path)
         parsed2 = parse_invoice_text(text) or {}
+
         md = parsed2.get("metadata") or {}
         totals = parsed2.get("totals") or {}
+        # prefer consignee/buyer as party_name if present
         kv = {
             "bill_no": md.get("invoice_no"),
             "bill_date": md.get("bill_date"),
-            "party_name": md.get("vendor_name"),
+            "party_name": md.get("party_name") or md.get("vendor_name"),
             "total": totals.get("grand_total"),
         }
         vendor = {
             "name": md.get("vendor_name"),
             "gst_number": md.get("gst_number"),
             "address": md.get("address"),
-            "contact": md.get("phone"),
+            "contact": md.get("phone") or md.get("contact"),
             "email": md.get("email"),
         }
         lines = parsed2.get("lines") or []
@@ -155,7 +157,7 @@ def process_invoice(bill_id: int, file_path: str) -> Dict[str, Any]:
         if pipeline_process:
             try:
                 result = pipeline_process(file_path, db, bill_id)
-                # pipeline_process commits; return what it produced
+                # pipeline_process commits; reflect final status and return what it produced
                 bill = db.get(models.Bill, bill_id)
                 return {"bill_id": bill_id, "status": bill.status, **(result or {})}
             except Exception:
@@ -191,10 +193,9 @@ def process_invoice(bill_id: int, file_path: str) -> Dict[str, Any]:
         vendor_info = parsed.get("vendor") or {}
         if vendor_info:
             crud.attach_vendor_to_bill(db, bill, vendor_info)
-            bill.party_name = vendor_info.get("name") or bill.party_name
-        else:
-            bill.party_name = kv.get("party_name") or bill.party_name
 
+        # Prefer party_name parsed from consignee/buyer; else vendor name; else keep existing
+        bill.party_name = kv.get("party_name") or vendor_info.get("name") or bill.party_name
         bill.source = bill.source or "OCR"
 
         # Build lines safely
