@@ -635,6 +635,87 @@ def _looks_plausible(li: Dict[str, Any]) -> bool:
         return False
     return True
 
+# --------------------------- continuation repair & totals recompute ---------------------------
+DIM_TOKEN = re.compile(
+    r"""^(
+        \d{2,4}\s*MM|            # 220MM, 450 MM
+        \d{1,3}\s*CM|            # 80 CM
+        \d{1,2}\s*(?:["”])|      # 18", 24”
+        \d{2,4}\s*\*\s*\d{2,4}\s*CM|  # 80*65 CM (OCR star)
+        \d{1,4}x\d{1,4}          # 600x600
+    )\b""",
+    re.IGNORECASE | re.VERBOSE
+)
+SNO_TOKEN = re.compile(r"^\s*(\d{1,3})\s+\b")
+
+def _normalize_quotes_spaces(s: str) -> str:
+    s = (s or "").replace('”','"').replace('“','"').replace('′',"'")
+    s = re.sub(r"\s{2,}", " ", s)
+    s = re.sub(r"\s+(CM|MM)\b", r" \1", s, flags=re.IGNORECASE)
+    s = re.sub(r"\s*\*\s*", "* ", s)  # "80* 65 CM" -> "80* 65 CM"
+    s = re.sub(r'\s+"', '"', s)
+    return s.strip()
+
+def _repair_continuations(lines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Merge leading dimension tokens (e.g., '220MM', '24"') into previous line's description.
+    Lift S.No to the head if it appears later in the string.
+    """
+    out: List[Dict[str, Any]] = []
+    for i, ln in enumerate(lines):
+        curr = dict(ln)
+        desc = _normalize_quotes_spaces(curr.get("description_raw") or "")
+
+        # If this line begins with a dimension token, push the token into previous desc
+        m = DIM_TOKEN.match(desc)
+        if m and out:
+            dim = m.group(1).strip()
+            prev = dict(out[-1])
+            pdesc = _normalize_quotes_spaces(prev.get("description_raw") or "")
+            if not re.search(rf"\b{re.escape(dim)}\b", pdesc, flags=re.IGNORECASE):
+                prev["description_raw"] = (pdesc + " " + dim).strip()
+            out[-1] = prev
+            desc = desc[m.end():].lstrip()
+
+        # If a serial number exists away from the head, move it to the front
+        if not SNO_TOKEN.match(desc):
+            tail_sno = re.search(r"\b(\d{1,3})\b\s+(?=[A-Z0-9])", desc)
+            if tail_sno:
+                sno = tail_sno.group(1)
+                desc = f"{sno} " + re.sub(r"\b" + re.escape(sno) + r"\b\s+", "", desc, count=1)
+
+        curr["description_raw"] = desc.strip()
+        out.append(curr)
+    return out
+
+def _recompute_line_totals(lines: List[Dict[str, Any]], tolerance: float = 0.50) -> Tuple[List[Dict[str, Any]], float, bool]:
+    """
+    Recompute each line_total as qty*unit_price (2dp). If existing line_total differs within tolerance, fix it.
+    Returns (lines, sum_total, any_line_flagged).
+    """
+    from decimal import Decimal, ROUND_HALF_UP
+    sum_calc = Decimal("0.00")
+    any_flag = False
+    out: List[Dict[str, Any]] = []
+    for ln in lines:
+        li = dict(ln)
+        try:
+            qty = Decimal(str(li.get("qty") or 0))
+            up  = Decimal(str(li.get("unit_price") or 0))
+            expected = (qty * up).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            seen = Decimal(str(li.get("line_total") or 0)).quantize(Decimal("0.01"))
+            if (expected - seen).copy_abs() <= Decimal(str(tolerance)):
+                li["line_total"] = float(expected)
+            else:
+                # keep existing, but flag
+                li["needs_review"] = True
+                any_flag = True
+            sum_calc += expected
+        except Exception:
+            any_flag = True
+        out.append(li)
+    return out, float(sum_calc), any_flag
+
 # --------------------------- orchestrator ---------------------------
 def _prefer_table_lines(lines_text: List[Dict[str, Any]], lines_table: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -655,27 +736,35 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
     lines_text  = parsed["lines"]
     lines_table = _extract_table_items(file_path)
     chosen_lines = _prefer_table_lines(lines_text, lines_table)
-    merged_lines = _dedup_items(chosen_lines)
+
+    # --- repair continuations / normalize serials (only helpful for text-derived noise) ---
+    repaired_lines = _repair_continuations(chosen_lines)
+
+    # Dedup after repairs
+    merged_lines = _dedup_items(repaired_lines)
+
+    # --- recompute line totals and capture possible discrepancies ---
+    merged_lines, sum_lines_recomp, any_line_flag = _recompute_line_totals(merged_lines)
 
     # --- auto totals guard / reconciliation ---
-    sum_lines = round(sum(float(li.get("line_total") or 0) for li in merged_lines), 2) if merged_lines else 0.0
-    taxes = sum(float(parsed["totals"].get(k) or 0.0) for k in ("cgst", "sgst", "igst"))
-    gt_stated = parsed["totals"].get("grand_total")
+    totals = dict(parsed["totals"] or {})
+    taxes = sum(float(totals.get(k) or 0.0) for k in ("cgst", "sgst", "igst"))
+    gt_stated = totals.get("grand_total")
 
-    totals = parsed["totals"]
-    if gt_stated is None and sum_lines > 0:
-        totals["grand_total"] = sum_lines
+    if gt_stated is None and sum_lines_recomp > 0:
+        totals["grand_total"] = sum_lines_recomp
         totals["grand_total_source"] = "sum_of_lines"
     else:
         totals["grand_total_source"] = "stated"
 
-    tol = max(1.0, 0.03 * max(sum_lines + taxes, totals.get("grand_total") or 0.0))
+    tol = max(1.0, 0.03 * max(sum_lines_recomp + taxes, totals.get("grand_total") or 0.0))
     needs_review_totals = False
     if totals.get("grand_total") is not None:
-        expected = sum_lines + taxes
+        expected = sum_lines_recomp + taxes
         if abs((totals["grand_total"] or 0) - expected) > tol:
             needs_review_totals = True
 
+    # Compare raw text vs table sums to catch drift
     try:
         text_sum  = round(sum(float(li.get("line_total") or 0) for li in lines_text), 2)
         table_sum = round(sum(float(li.get("line_total") or 0) for li in lines_table), 2)
@@ -732,7 +821,7 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 
     bill.status = "PROCESSED"
 
-    needs_review = bool(md.get("needs_review_vendor") or needs_review_totals)
+    needs_review = bool(md.get("needs_review_vendor") or needs_review_totals or any_line_flag)
     try:
         fname = os.path.basename(file_path)
         stem = os.path.splitext(fname)[0].strip().lower()
