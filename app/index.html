@@ -234,6 +234,49 @@
               <tbody id="ocrTable"></tbody>
             </table>
           </div>
+          <!-- Bill Details Modal -->
+<div class="modal fade" id="billModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="background:#101431;color:var(--text);border:1px solid rgba(126,155,255,.2)">
+      <div class="modal-header">
+        <h5 class="modal-title">Bill <span id="bmBillNo"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="small-muted mb-2">
+          <span class="me-3">Vendor: <span id="bmVendor"></span></span>
+          <span class="me-3">Date: <span id="bmDate"></span></span>
+          <span>Status: <span id="bmStatus" class="chip"></span></span>
+        </div>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th style="width:48px">#</th>
+                <th>Description</th>
+                <th>HSN</th>
+                <th>UOM</th>
+                <th class="text-end">Qty</th>
+                <th class="text-end">Rate</th>
+                <th class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody id="bmLines"></tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-end">
+          <div class="fs-6">Total: <strong id="bmTotal"></strong></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="bmApprove" class="btn btn-primary">
+          <i class="bi bi-check2-square me-1"></i>Approve & Update Stock
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
           <div class="small-muted">Select processed bills and click Approve to update stock.</div>
         </div>
       </div>
@@ -529,6 +572,65 @@
             </tr>`).join('');
       } catch(e){ console.error(e); }
     }
+    // --- row click -> open details modal
+document.getElementById('ocrTable').addEventListener('click', async (e) => {
+  const tr = e.target.closest('tr'); if (!tr) return;
+  const id = tr.dataset.billId;
+  try {
+    const res = await fetch(`${API}/bills/${id}`);
+    if (!res.ok) throw new Error(await res.text());
+    const b = await res.json();
+
+    // header fields
+    document.getElementById('bmBillNo').textContent = b.bill_no || '—';
+    document.getElementById('bmVendor').textContent = b.party_name || '—';
+    document.getElementById('bmDate').textContent   = b.bill_date || '—';
+    const st = document.getElementById('bmStatus');
+    st.textContent = b.status;
+    st.className = 'chip ' + (b.status === 'PROCESSED' ? 'chip-ok' : 'chip-warn');
+
+    // lines
+    const tbody = document.getElementById('bmLines');
+    tbody.innerHTML = (b.lines || []).map((ln, i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td>${ln.description_raw ?? ln.description ?? ''}</td>
+        <td>${ln.hsn ?? ''}</td>
+        <td>${ln.uom ?? ''}</td>
+        <td class="text-end">${Number(ln.qty ?? 0)}</td>
+        <td class="text-end">₹ ${INR(ln.unit_price ?? ln.rate ?? 0)}</td>
+        <td class="text-end">₹ ${INR(ln.line_total ?? ln.amount ?? 0)}</td>
+      </tr>
+    `).join('');
+
+    // total
+    document.getElementById('bmTotal').textContent = '₹ ' + INR(b.total ?? 0);
+
+    // approve button on this specific bill
+    const btn = document.getElementById('bmApprove');
+    btn.onclick = async () => {
+      try {
+        const r = await fetch(`${API}/bills/${id}/confirm`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ bill_type:'PURCHASE' })
+        });
+        if (!r.ok) throw new Error(await r.text());
+        // refresh lists and close
+        await Promise.all([loadOcrInbox(), loadRecentBills(), loadDashboard()]);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('billModal')).hide();
+        toastMsg.textContent = `Bill #${b.bill_no || id} approved.`; toast.show();
+      } catch (e) {
+        console.error(e); toastMsg.textContent = `Approve failed: ${e.message}`; toast.show();
+      }
+    };
+
+    // show modal
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('billModal')).show();
+  } catch (e) {
+    console.error(e);
+  }
+});
 
     // ---- events
     btnOCR.onclick = async () => {

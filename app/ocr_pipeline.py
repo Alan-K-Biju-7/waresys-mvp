@@ -584,7 +584,13 @@ def parse_invoice_text(text: str) -> Dict[str, Any]:
     if (m := CGST_RE.search(text)): totals["cgst"] = _to_float(m.group(1)) or 0.0
     if (m := SGST_RE.search(text)): totals["sgst"] = _to_float(m.group(1)) or 0.0
     if (m := IGST_RE.search(text)): totals["igst"] = _to_float(m.group(1)) or 0.0
-    if (m := TOTAL_RE.search(text)): totals["grand_total"] = _to_float(m.group(1)) or 0.0
+    # Prefer the largest plausible "Total" on the page (handles multiple matches)
+    ms = list(TOTAL_RE.finditer(text))
+    if ms:
+        totals["grand_total"] = max(
+            (_to_float(m.group(1)) or 0.0) for m in ms
+        )
+
 
     md: Dict[str, Any] = {}
 
@@ -794,8 +800,39 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 
     bill = db.get(models.Bill, bill_id)
 
-    if totals.get("grand_total") is not None:
-        bill.total = totals["grand_total"]
+    # Sum from parsed items currently in DB
+    line_sum = 0.0
+    try:
+        line_sum = float(sum(
+            (ln.line_total or 0.0)
+            for ln in db.query(models.BillLine).filter_by(bill_id=bill_id).all()
+        ))
+    except Exception:
+        line_sum = 0.0
+
+    text_total = totals.get("grand_total")
+
+    def _round2(x): 
+        return None if x is None else float(round(x, 2))
+
+    # Choose the most reasonable total:
+    # 1) If both exist and disagree a lot, trust lines (and flag for review)
+    # 2) If only one exists, use it
+    # 3) Else leave as None
+    if text_total is not None and line_sum > 0:
+        # Allow ~20% room (GST, rounding, misc charges). Outside that → use lines.
+        low, high = 0.8 * line_sum, 1.2 * line_sum
+        if text_total < low or text_total > high:
+            bill.total = _round2(line_sum)
+            bill.needs_review = True
+        else:
+            bill.total = _round2(text_total)
+    elif line_sum > 0:
+        bill.total = _round2(line_sum)
+    elif text_total is not None:
+        bill.total = _round2(text_total)
+    # else: keep as None
+
 
     md = parsed["metadata"] or {}
     if md.get("invoice_no"):
