@@ -1,690 +1,1175 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Waresys • Dark Showcase</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
-<style>
-  :root{ --bg:#0c1020; --panel:#121630; --muted:#9aa4c7; --text:#e8ecff; --brand:#6ea8ff; --brand2:#7df5ff; --vio:#9b7dff; --glass:rgba(255,255,255,.04) }
-  *{box-sizing:border-box}
-  body{ margin:0; background:
-      radial-gradient(1200px 600px at 85% -10%, rgba(109,87,255,.25), transparent 60%),
-      radial-gradient(800px 400px at -10% 110%, rgba(0,186,255,.18), transparent 60%),
-      linear-gradient(135deg,#0a0e1b 0%,#0c1020 35%,#0a0f24 100%);
-    color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto }
-  .neon{background:linear-gradient(90deg,var(--brand2),var(--brand),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .navbar{background:rgba(8,12,28,.7); backdrop-filter:blur(8px); border-bottom:1px solid rgba(126,155,255,.18)}
-  .navbar .nav-link,.navbar .navbar-brand{color:var(--text)!important; opacity:.9}
-  .nav-pills .nav-link.active{background:linear-gradient(90deg,var(--brand2),var(--brand)); color:#000!important}
-  .sidebar{ width:240px; min-height:100vh; position:fixed; top:56px; left:0; padding:18px 14px;
-    background:rgba(8,12,28,.55); border-right:1px solid rgba(126,155,255,.12); backdrop-filter: blur(8px) }
-  .content{margin-left:240px; padding:22px}
-  .card{ background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.02));
-    border:1px solid rgba(126,155,255,.14); border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.35)}
-  .btn-primary{background:linear-gradient(90deg,var(--brand2),var(--brand)); border:0}
-  .btn-outline{color:var(--text); border:1px solid rgba(126,155,255,.25)}
-  .small-muted{color:var(--muted); font-size:.9rem}
-  .dropzone{border:1px dashed rgba(126,155,255,.35); border-radius:14px; padding:22px; text-align:center; cursor:pointer}
-  .chip{padding:.35rem .6rem; border-radius:999px; font-size:.85rem}
-  .chip-ok{background:rgba(46,213,115,.16); color:#6fffb1; border:1px solid rgba(46,213,115,.28)}
-  .chip-warn{background:rgba(255,193,7,.12); color:#ffd26a; border:1px solid rgba(255,193,7,.25)}
-  .table > :not(caption) > * > *{background:transparent; color:var(--text); border-color:rgba(126,155,255,.14)}
-  .table thead tr{background:rgba(126,155,255,.06)!important}
-  .section{display:none} .section.active{display:block}
-  #loginWrap{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:
-      radial-gradient(500px 300px at 10% 10%, rgba(109,87,255,.25), transparent 60%),
-      linear-gradient(135deg,#0b0f21,#0a1026); z-index:2000 }
-  .login-card{width:380px}
-  .tour-mask{ position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter: blur(2px); display:none; z-index:3000 }
-  .tour-box{ position:fixed; max-width:340px; background:#101431; color:var(--text); border:1px solid rgba(126,155,255,.3);
-    padding:14px 14px 12px; border-radius:12px; z-index:3001; box-shadow:0 8px 24px rgba(0,0,0,.45) }
-  .tour-arrow{position:absolute; width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #101431; bottom:-10px; left:22px}
-  .badge-soft{background:rgba(110,168,255,.12); color:#bcd2ff; border:1px solid rgba(110,168,255,.25)}
-  @media (max-width: 992px){ .sidebar{position:static; width:100%; min-height:auto} .content{margin:0}}
+  <head>
+    <meta charset="utf-8" />
+    <title>Waresys · Light</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Tailwind (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { theme: { extend: {} } };</script>
+    <style>html,body{height:100%} /* ==== local chart tooltips (pie/weekly) ==== */
+.chart-tip{
+  position:fixed; padding:6px 10px; border-radius:8px;
+  background:rgba(15,23,42,.96); color:#e5e7eb;
+  font:12px system-ui; pointer-events:none; transform:translate(-50%,-120%);
+  box-shadow:0 8px 24px rgba(0,0,0,.35); border:1px solid rgba(148,163,184,.25);
+  display:none; z-index:50;
+}
 </style>
-</head>
-<body>
+  </head>
+  <body class="bg-slate-50 text-slate-900">
+    <div id="root"></div>
 
-<!-- Login -->
-<div id="loginWrap">
-  <div class="card login-card p-3">
-    <h4 class="fw-bold mb-2 neon">Waresys Login</h4>
-    <div class="small-muted mb-3">Demo login. Any credentials work.</div>
-    <div class="mb-2">
-      <label class="form-label small">Email</label>
-      <input class="form-control form-control-lg" placeholder="you@company.com">
-    </div>
-    <div class="mb-3">
-      <label class="form-label small">Password</label>
-      <input type="password" class="form-control form-control-lg" placeholder="••••••••">
-    </div>
-    <div class="d-grid gap-2">
-      <button id="btnLogin" class="btn btn-primary btn-lg">Login</button>
-      <button id="btnLoginAdmin" class="btn btn-outline btn-lg">Login as Admin</button>
-    </div>
-    <div class="text-center mt-2 small-muted">This is a presentation-only screen.</div>
-  </div>
-</div>
+    <!-- React + ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 
-<!-- Topbar -->
-<nav class="navbar navbar-expand-lg sticky-top">
-  <div class="container-fluid px-3">
-    <a class="navbar-brand fw-semibold d-flex align-items-center gap-2" href="#"><i class="bi bi-box-seam"></i> Waresys</a>
-    <button class="navbar-toggler bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
-    <div id="nav" class="collapse navbar-collapse">
-      <ul class="navbar-nav ms-auto align-items-center gap-2">
-        <li class="nav-item"><button id="btnStartTour" class="btn btn-primary btn-sm"><i class="bi bi-stars me-1"></i>Start Demo</button></li>
-      </ul>
-    </div>
-  </div>
-</nav>
+    <!-- Recharts (versioned) + fallback -->
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js" crossorigin></script>
+    <script>
+      if (!window.Recharts) {
+        document.write('<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"><\/script>');
+      }
+    </script>
 
-<!-- Sidebar -->
-<div class="sidebar">
-  <div class="small-muted mb-2">Navigation</div>
-  <ul class="nav nav-pills flex-column gap-2" id="sideNav">
-    <li class="nav-item"><a class="nav-link active" data-target="dashboard" href="#"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-    <li class="nav-item"><a class="nav-link" data-target="products" href="#"><i class="bi bi-boxes me-1"></i>Products</a></li>
-    <li class="nav-item"><a class="nav-link" data-target="vendors" href="#"><i class="bi bi-truck me-1"></i>Vendors</a></li>
-    <li class="nav-item"><a class="nav-link" data-target="bills" href="#"><i class="bi bi-receipt me-1"></i>Bills & OCR</a></li>
-    <li class="nav-item"><a class="nav-link" data-target="reports" href="#"><i class="bi bi-graph-up-arrow me-1"></i>Reports</a></li>
-    <li class="nav-item admin-only d-none"><a class="nav-link" data-target="admin" href="#"><i class="bi bi-person-gear me-1"></i>Admin & Roles</a></li>
-  </ul>
-  <div class="mt-4">
-    <div class="small-muted mb-1">Session</div>
-    <button id="btnLogout" class="btn btn-outline w-100"><i class="bi bi-box-arrow-right me-1"></i>Log Out</button>
-  </div>
-</div>
+    <!-- Babel for inline JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-<div class="content">
+    <!-- One-time API base locker -->
+    <script>
+      (async function lockApiBase() {
+        const KEY = "WARESYS_API";
+        const LOCK = "WARESYS_API_LOCKED";
+        if (sessionStorage.getItem(LOCK) === "2") return;
 
-  <!-- Dashboard -->
-  <section id="dashboard" class="section active">
-    <div class="d-flex flex-wrap align-items-end justify-content-between">
-      <div>
-        <h2 class="fw-bold neon mb-1">Inventory Overview</h2>
-        <div class="small-muted">Real-time visibility of stock, bills, and vendors</div>
-      </div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline"><i class="bi bi-download me-1"></i>Export</button>
-        <button class="btn btn-primary" onclick="document.querySelector('a[data-target=bills]').click()"><i class="bi bi-plus-circle me-1"></i>New Bill</button>
-      </div>
-    </div>
+        const stored = (localStorage.getItem(KEY) || "").replace(/\/+$/, "");
+        const probes = stored ? [stored] : [window.location.origin, "http://localhost:8000"];
 
-    <div class="row g-3 mt-1">
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Total SKUs</div><div id="kSkus" class="fs-3 fw-semibold">...</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Stock Qty</div><div id="kStock" class="fs-3 fw-semibold">...</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Pending Bills</div><div id="kPend" class="fs-3 fw-semibold">...</div></div></div>
-      <div class="col-6 col-xl-3"><div class="card p-3"><div class="small-muted">Vendors</div><div id="kVend" class="fs-3 fw-semibold">...</div></div></div>
-    </div>
+        for (const base of probes) {
+          try {
+            const u = base.replace(/\/+$/, "") + "/api/health";
+            const r = await fetch(u, { mode: "cors", cache: "no-store" });
+            if (r.ok) {
+              if (stored !== base) {
+                localStorage.setItem(KEY, base.replace(/\/+$/, ""));
+                if (!sessionStorage.getItem(LOCK)) {
+                  sessionStorage.setItem(LOCK, "1");
+                  location.reload(); // one-time bind to API
+                  return;
+                }
+              }
+              sessionStorage.setItem(LOCK, "2");
+              return;
+            }
+          } catch {}
+        }
+        if (!stored) localStorage.setItem(KEY, "http://localhost:8000");
+        sessionStorage.setItem(LOCK, "2");
+      })();
+    </script>
 
-    <div class="row g-4 mt-1">
-      <div class="col-lg-6">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Stock by Category</h5>
-            <span class="badge badge-soft">Donut</span>
-          </div>
-          <canvas id="donut"></canvas>
-        </div>
-      </div>
-      <div class="col-lg-6">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Weekly Stock Movement</h5>
-            <span class="badge badge-soft">Bar</span>
-          </div>
-          <canvas id="bar"></canvas>
-        </div>
-      </div>
-    </div>
+    <script type="text/babel">
+      // ---------------- libs & React hooks
+      const R = window.Recharts || {};
+      const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } = R;
+      const { useEffect, useMemo, useRef, useState } = React;
 
-    <div class="card p-3 mt-4">
-      <div class="d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Recent Bills / Stock Updates</h5>
-        <div class="small-muted">Auto-updated by OCR</div>
-      </div>
-      <div class="table-responsive mt-3">
-        <table class="table align-middle">
-          <thead><tr><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
-          <tbody id="billTable"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
+      // ---------------- small helpers
+      const fmtDate = d => { try { return d ? new Date(d).toLocaleDateString() : "—"; } catch { return "—"; } };
+      const fmtINR  = v => v==null ? "—" : "₹" + Number(v).toLocaleString("en-IN");
+      /* ===== HSN→Category config (ONLY these HSNs count) ===== */
+const HSN_GROUPS = {
+  "Tiles": ["690721","690722"],
+  "Sanitaryware (Ceramic)": ["691010"],
+  "Metal Fixtures & Fittings": ["848180","848190","732410","7418"],
+  "Connectors & Fasteners": ["391710","391740","392290","731815","7318","741220"],
+  "Mirrors & Glass": ["700910"],
+  "Adhesives, Chemicals & Tapes": ["382450","392099"]
+};
+// ignore services (e.g., 9964 transport)
+const SAC_EXCLUDE_PREFIX = "99";
 
-  <!-- Products -->
-  <section id="products" class="section">
-    <div class="d-flex justify-content-between align-items-end">
-      <div><h2 class="fw-bold neon mb-1">Products</h2><div class="small-muted">Add / Search / Update</div></div>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProduct"><i class="bi bi-plus-lg me-1"></i>Add Product</button>
-    </div>
-    <div class="card p-3 mt-3">
-      <div class="row g-2">
-        <div class="col-md-4"><input class="form-control" placeholder="Search product name..."></div>
-        <div class="col-md-3">
-          <select class="form-select">
-            <option>All Categories</option><option>Tiles</option><option>Sanitaryware</option><option>Cement</option><option>Steel</option><option>Adhesives</option>
-          </select>
-        </div>
-        <div class="col-md-2"><button class="btn btn-outline w-100"><i class="bi bi-search me-1"></i>Search</button></div>
-      </div>
-      <div class="table-responsive mt-3">
-        <table class="table align-middle">
-          <thead><tr><th>SKU</th><th>Name</th><th>Category</th><th>Stock</th><th>Price</th><th></th></tr></thead>
-          <tbody id="prodTable"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
+/* returns {category, hsn} if HSN is in our groups; otherwise null (ignored) */
+function categorizeHSN(rawHSN) {
+  if (!rawHSN) return null;
+  const hsn = String(rawHSN).replace(/\D/g,'');           // keep only digits
+  if (!hsn || hsn.startsWith(SAC_EXCLUDE_PREFIX)) return null;
+  for (const [cat, list] of Object.entries(HSN_GROUPS)) {
+    if (list.includes(hsn)) return { category: cat, hsn };
+    if (list.some(x => x.length===4 && hsn.startsWith(x))) return { category: cat, hsn };
+  }
+  return null;
+}
 
-  <!-- Vendors -->
-  <section id="vendors" class="section">
-    <div class="d-flex justify-content-between align-items-end">
-      <div><h2 class="fw-bold neon mb-1">Vendors</h2><div class="small-muted">Manage supplier profiles</div></div>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalVendor"><i class="bi bi-plus-lg me-1"></i>Add Vendor</button>
-    </div>
-    <div class="card p-3 mt-3">
-      <div class="table-responsive">
-        <table class="table align-middle">
-          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Bills</th><th></th></tr></thead>
-          <tbody id="vendTable"></tbody>
-        </table>
-      </div>
-    </div>
-  </section>
+      // parse numeric text like "₹1,234.50" → 1234.50
+      const num = (v) => {
+        if (v === null || v === undefined) return 0;
+        const s = String(v).replace(/[^\d.\-]/g, '');
+        const n = parseFloat(s);
+        return isFinite(n) ? n : 0;
+      };
 
-  <!-- Bills & OCR -->
-  <section id="bills" class="section">
-    <div class="d-flex justify-content-between align-items-end">
-      <div><h2 class="fw-bold neon mb-1">Bills & OCR</h2><div class="small-muted">Upload → Extract → Verify → Update stock</div></div>
-    </div>
+        // lines to EXCLUDE from pre-GST subtotal
+        const isTaxOrRoundingLine = (desc = "") =>
+          /(^|\s)(cgst|sgst|igst|vat|tax|round[\s-]*off|rounding|r\/?o|tcs|tds|cess)(\s|$)/i.test(desc);
 
-    <div class="row g-3 mt-1">
-      <div class="col-lg-5">
-        <div class="card p-3">
-          <h5 class="mb-2">Upload Bill (OCR)</h5>
-          <div id="dz" class="dropzone">
-            <i class="bi bi-cloud-arrow-up-fill fs-1 d-block mb-2" style="color:var(--brand)"></i>
-            <div class="fw-semibold">Drag & drop PDF/Image</div>
-            <div class="small-muted">or click to choose a file</div>
-            <input id="file" hidden type="file" accept="image/*,.pdf">
-          </div>
-          <div class="d-grid gap-2 mt-3">
-            <button id="btnOCR" class="btn btn-primary"><i class="bi bi-cpu me-1"></i>Process OCR</button>
-            <div class="progress" style="height:10px; display:none;">
-              <div id="pb" class="progress-bar progress-bar-striped progress-bar-animated" style="width:0%; background:linear-gradient(90deg,var(--brand2),var(--brand))"></div>
-            </div>
-          </div>
-        </div>
-      </div>
+      // demo fallbacks (only if API isn’t reachable)
+      const demoBills = () => ([
+        { id: 101, bill_no: "A2Z/INV/8731", bill_date: new Date().toISOString(), party_name: "—", lines: new Array(12), status: "PROCESSED", accuracy: 93 },
+        { id: 102, bill_no: "KJ/PI/554",   bill_date: new Date(Date.now()-864e5).toISOString(), party_name: "—", lines: new Array(9), status: "PROCESSED", accuracy: 92 },
+        { id: 103, bill_no: "RET/DEL/901", bill_date: new Date(Date.now()-2*864e5).toISOString(), party_name: "—", lines: new Array(7), status: "ERROR", accuracy: 0 },
+      ]);
+      const demoProducts = () => ([
+        { sku:"TIL-001", name:"Matte Tile 12x12", category:"Tiles",    hsn:"6907", price:450,  stock_qty:120, reorder_point:30 },
+        { sku:"PIP-110", name:"PVC Pipe 110mm",   category:"Pipes",    hsn:"3917", price:260,  stock_qty:80,  reorder_point:20 },
+        { sku:"FIT-AAA", name:"Coupling AAA",     category:"Fittings", hsn:"8481", price:95,   stock_qty:300, reorder_point:100 },
+        { sku:"WC-001",  name:"Wall Closet",      category:"WC",       hsn:"6910", price:4200, stock_qty:22,  reorder_point:5  },
+      ]);
 
-      <div class="col-lg-7">
-        <div class="card p-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">OCR Inbox</h5>
-            <button id="btnApprove" class="btn btn-outline btn-sm"><i class="bi bi-check2-square me-1"></i>Approve Selected</button>
-          </div>
-          <div class="table-responsive mt-2">
-            <table class="table align-middle">
-              <thead><tr><th></th><th>Bill No</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
-              <tbody id="ocrTable"></tbody>
-            </table>
-          </div>
-          <!-- Bill Details Modal -->
-<div class="modal fade" id="billModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content" style="background:#101431;color:var(--text);border:1px solid rgba(126,155,255,.2)">
-      <div class="modal-header">
-        <h5 class="modal-title">Bill <span id="bmBillNo"></span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="small-muted mb-2">
-          <span class="me-3">Vendor: <span id="bmVendor"></span></span>
-          <span class="me-3">Date: <span id="bmDate"></span></span>
-          <span>Status: <span id="bmStatus" class="chip"></span></span>
-        </div>
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th style="width:48px">#</th>
-                <th>Description</th>
-                <th>HSN</th>
-                <th>UOM</th>
-                <th class="text-end">Qty</th>
-                <th class="text-end">Rate</th>
-                <th class="text-end">Amount</th>
-              </tr>
-            </thead>
-            <tbody id="bmLines"></tbody>
-          </table>
-        </div>
-        <div class="d-flex justify-content-end">
-          <div class="fs-6">Total: <strong id="bmTotal"></strong></div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="bmApprove" class="btn btn-primary">
-          <i class="bi bi-check2-square me-1"></i>Approve & Update Stock
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
+      // ---------------- strict mapping to server shape (NO dedupe)
+      function mapServerBill(raw = {}) {
+        const lines = (raw.lines || []).map((l, i) => {
+          const qty   = Number(l.qty ?? 0);
+          const rate  = Number(l.unit_price ?? l.rate ?? 0);
+          const amt   = Number(l.line_total ?? l.amount ?? (qty * rate));
+          return {
+            idx: i + 1,
+            description: (l.description_raw || l.description || "—"),
+            hsn: (l.hsn || "—"),
+            uom: (l.uom || "—"),
+            qty, rate, amount: amt,
+          };
+        });
 
-          <div class="small-muted">Select processed bills and click Approve to update stock.</div>
-        </div>
-      </div>
-    </div>
-  </section>
+        // 1) Server-provided total (fallback: sum of amounts)
+        const total =
+          (typeof raw.total === "number")
+            ? raw.total
+            : lines.reduce((s, ln) => s + (num(ln.amount) || 0), 0);
 
-  <!-- Reports -->
-  <section id="reports" class="section">
-    <div class="d-flex justify-content-between align-items-end">
-      <div><h2 class="fw-bold neon mb-1">Reports</h2><div class="small-muted">Download or publish summaries</div></div>
-      <button id="btnPublish" class="btn btn-primary"><i class="bi bi-send-check me-1"></i>Publish Report</button>
-    </div>
-     <div class="card p-3 mt-3">More reports coming soon.</div>
-  </section>
+        // 2) Client-side pre-GST subtotal: sum only product lines (skip tax/round-off/cess)
+        const pre_total = lines.reduce((s, ln) => {
+          const d = (ln.description || "").trim();
+          if (isTaxOrRoundingLine(d)) return s;             // exclude CGST/SGST/IGST/VAT/Tax/RO/Cess/TCS/TDS
+          const amt = num(ln.amount) || (num(ln.qty) * num(ln.rate));
+          return s + (isFinite(amt) ? amt : 0);
+        }, 0);
 
-  <!-- Admin -->
-  <section id="admin" class="section">
-    <div class="d-flex justify-content-between align-items-end">
-      <div><h2 class="fw-bold neon mb-1">Admin & Roles</h2><div class="small-muted">Create users, assign roles</div></div>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalUser"><i class="bi bi-person-plus me-1"></i>New User</button>
-    </div>
-    <div class="card p-3 mt-3">
-      <div class="table-responsive">
-        <table class="table align-middle">
-          <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
-          <tbody>
-            <tr><td>Admin User</td><td>admin@waresys.app</td><td><span class="chip chip-ok">Admin</span></td><td>Active</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-            <tr><td>Manager User</td><td>manager@waresys.app</td><td><span class="chip chip-warn">Manager</span></td><td>Active</td><td><button class="btn btn-outline btn-sm">Edit</button></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
 
-</div>
+        return {
+  bill_id: raw.bill_id ?? raw.id,
+  bill_no: raw.bill_no ?? raw.number ?? raw.invoice_no ?? raw.filename ?? "—",
+  bill_date: raw.bill_date ?? raw.date ?? null,
+  party_name: raw.party_name || "—",
+  gstin: raw.gstin || raw.vendor?.gst_number || raw.vendor_gst || "—",
+  status: raw.status || "PROCESSED",
+  lines,
+  total,
+  pre_total,     // ← added
+  line_count: Array.isArray(raw.lines) ? raw.lines.length : (raw.line_count ?? 0),
+};
 
-<!-- Product Modal -->
-<div class="modal fade" id="modalProduct" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
-    <div class="modal-header"><h5 class="modal-title">Add Product</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">
-      <div class="row g-2">
-        <div class="col-md-6"><input id="prodSku" class="form-control" placeholder="SKU (auto ok)"></div>
-        <div class="col-md-6"><input id="prodName" class="form-control" placeholder="Name"></div>
-        <div class="col-md-6">
-          <select id="prodCategory" class="form-select">
-            <option>Tiles</option><option>Sanitaryware</option><option>Cement</option><option>Steel</option><option>Adhesives</option>
-          </select>
-        </div>
-        <div class="col-md-3"><input id="prodStock" class="form-control" placeholder="Stock" value="10"></div>
-        <div class="col-md-3"><input id="prodPrice" class="form-control" placeholder="Price" value="250"></div>
-      </div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button><button id="btnAddProd" class="btn btn-primary" data-bs-dismiss="modal">Add</button></div>
-  </div></div>
-</div>
+      }
+      /* Build category & weekly aggregates from a list of bills (server shape or mapServerBill shape) */
+function buildCategoryAggregates(bills) {
+  
+  const pieCounts = {};     // { category: totalQty }
+  const catHsn = {};        // { "category::hsn": {category, hsn, qty} }
+  const weekly = {};        // { "YYYY-Www": qty }
 
-<!-- Vendor Modal -->
-<div class="modal fade" id="modalVendor" tabindex="-1">
-  <div class="modal-dialog"><div class="modal-content" style="background:#101431; color:var(--text);">
-    <div class="modal-header"><h5 class="modal-title">Add Vendor</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">
-      <div class="row g-2">
-        <div class="col-md-6"><input id="vendName" class="form-control" placeholder="Name"></div>
-        <div class="col-md-6"><input id="vendEmail" class="form-control" placeholder="Email"></div>
-        <div class="col-md-6"><input id="vendPhone" class="form-control" placeholder="Phone"></div>
-      </div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button><button id="btnAddVend" class="btn btn-primary" data-bs-dismiss="modal">Add</button></div>
-  </div></div>
-</div>
+  const toWeek = (iso) => {
+    if (!iso) return null;
+    const d = new Date(iso + 'T00:00:00'); if (isNaN(d)) return null;
+    const dt = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = dt.getUTCDay() || 7;
+    dt.setUTCDate(dt.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+    const weekNo = Math.ceil((((dt - yearStart) / 86400000) + 1) / 7);
+    return `${dt.getUTCFullYear()}-W${String(weekNo).padStart(2,'0')}`;
+  };
 
-<!-- Toast -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
-  <div id="toast" class="toast align-items-center text-bg-success border-0" role="alert"><div class="d-flex">
-    <div class="toast-body"><i class="bi bi-check-circle-fill me-2"></i><span id="toastMsg">Action completed</span></div>
-    <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-  </div></div>
-</div>
+  (bills || []).forEach(b => {
+    const wk = toWeek(b.bill_date);
+    (b.lines || []).forEach(ln => {
+      const tag = categorizeHSN(ln.hsn);
+      if (!tag) return; // not in our groups → ignore
+      const q = Number(ln.qty) || 1;
 
-<div id="tourMask" class="tour-mask"></div>
-<div id="tourBox" class="tour-box" style="display:none"><div id="tourText">Step</div><div class="tour-arrow"></div>
-  <div class="mt-2 d-flex justify-content-end gap-2">
-    <button id="tourPrev" class="btn btn-outline btn-sm">Back</button>
-    <button id="tourNext" class="btn btn-primary btn-sm">Next</button>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  // ===== GLOBALS =====
-  const API = localStorage.WARESYS_API || "http://localhost:8000";
-  const INR = (n) => Number(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  let toast = null, toastMsg = null;
-
-  // ---------- SPA Nav ----------
-  const sections = document.querySelectorAll('.section');
-  document.querySelectorAll('#sideNav .nav-link').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      document.querySelectorAll('#sideNav .nav-link').forEach(x => x.classList.remove('active'));
-      a.classList.add('active');
-      const id = a.dataset.target;
-      sections.forEach(s => s.classList.toggle('active', s.id === id));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      pieCounts[tag.category] = (pieCounts[tag.category] || 0) + q;
+      const key = `${tag.category}::${tag.hsn}`;
+      if (!catHsn[key]) catHsn[key] = { category: tag.category, hsn: tag.hsn, qty: 0 };
+      catHsn[key].qty += q;
+      if (wk) weekly[wk] = (weekly[wk] || 0) + q;
     });
   });
 
-  // ---------- Login / Logout demo ----------
-  const loginWrap = document.getElementById('loginWrap');
-  const btnLogin = document.getElementById('btnLogin');
-  const btnLoginAdmin = document.getElementById('btnLoginAdmin');
-  const btnLogout = document.getElementById('btnLogout');
+  const pieData = Object.entries(pieCounts).map(([category, qty]) => ({ category, qty }));
+  const tableData = Object.values(catHsn).sort((a,b)=> a.category.localeCompare(b.category) || a.hsn.localeCompare(b.hsn));
+  const weeklyData = Object.keys(weekly).sort().map(k => ({ week: k, qty: weekly[k] }));
+  return { pieData, tableData, weeklyData };
+}
+// Reorder point per category (tune as you like)
+const REORDER_BY_CATEGORY = {
+  "Tiles": 50,
+  "Sanitaryware (Ceramic)": 10,
+  "Metal Fixtures & Fittings": 30,
+  "Connectors & Fasteners": 200,
+  "Mirrors & Glass": 15,
+  "Adhesives, Chemicals & Tapes": 80
+};
 
-  function onLoginSuccess() {
-    toast = new bootstrap.Toast(document.getElementById('toast'));
-    toastMsg = document.getElementById('toastMsg');
-    loginWrap.style.display = 'none';
-    initializeApi();
-  }
+// Collapse invoice lines into "products" for Stock table
+// Collapse invoice lines into "products" for Stock table
+function buildProductsFromBills(bills) {
+  const map = new Map(); // key = "desc|hsn"
+  (bills || []).forEach(b => (b.lines || []).forEach(ln => {
+    const tag = categorizeHSN(ln.hsn);
+    if (!tag) return; // ignore non-group HSNs
+    const name = (ln.description_raw || ln.description || '').trim() || '(no name)';
+    const key = name + '|' + tag.hsn;
+    const qty = Number(ln.qty) || 1;
+    const price = Number(ln.unit_price ?? ln.rate) || 0;
 
-  btnLogin.onclick = () => {
-    document.querySelectorAll('.admin-only').forEach(x => x.classList.add('d-none'));
-    onLoginSuccess();
-  };
-  btnLoginAdmin.onclick = () => {
-    document.querySelectorAll('.admin-only').forEach(x => x.classList.remove('d-none'));
-    onLoginSuccess();
-  };
-  btnLogout.onclick = () => {
-    if (window._ocrPoll) clearInterval(window._ocrPoll);
-    loginWrap.style.display = 'flex';
-  };
+    if (!map.has(key)) {
+      // create a harmless sku so any existing sort/key on sku won't explode
+      const sku = (tag.hsn + '-' + name.toLowerCase().replace(/[^a-z0-9]+/g,'-')).slice(0,30);
+      map.set(key, { sku, name, category: tag.category, hsn: tag.hsn, price, stock_qty: qty });
+    } else {
+      const o = map.get(key);
+      o.stock_qty += qty;
+      if (price > 0) o.price = o.price > 0 ? ((o.price + price) / 2) : price; // simple avg
+    }
+  }));
+  return Array.from(map.values()).map(p => ({ ...p, reorder_point: REORDER_BY_CATEGORY[p.category] ?? 20 }));
+}
 
-  // ---------- Charts (static config; data filled later) ----------
-  const donut = new Chart(document.getElementById('donut'), {
-    type: 'doughnut',
-    data: { labels: [], datasets: [{ data: [] }] },
-    options: { cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#cfd6ff' } } } }
+
+
+/* simple palette */
+const PAL = (i) => `hsl(${(i*57)%360} 70% 55%)`;
+
+/* Canvas pie renderer — draws into #pieCanvas if present */
+// interactive donut pie (hover = tooltip + highlight)
+let __pieSlices = []; // {s,e,category,qty,color}
+function renderPie(data) {
+  const cvs = document.getElementById('pieCanvas'); if (!cvs) return;
+  const tip = document.getElementById('chartTip');
+  const ctx = cvs.getContext('2d'), W=cvs.width, H=cvs.height;
+  const cx=W*0.48, cy=H*0.58, R=Math.min(W,H)*0.40, r=R*0.62; // outer & inner radius
+  ctx.clearRect(0,0,W,H);
+
+  const total = data.reduce((s,d)=>s+(d.qty||0),0) || 1;
+  let a0 = -Math.PI/2;
+  __pieSlices = [];
+
+  // draw slices
+  data.forEach((d,i)=>{
+    const a = ((d.qty||0)/total) * Math.PI*2;
+    const a1 = a0 + a;
+    // store
+    __pieSlices.push({ s:a0, e:a1, category:d.category, qty: d.qty||0, color:`hsl(${(i*68)%360} 85% 60%)` });
+
+    // slice body
+    ctx.beginPath();
+    ctx.arc(cx,cy,R,a0,a1,false);
+    ctx.arc(cx,cy,r,a1,a0,true);
+    ctx.closePath();
+    // soft shading
+    const g = ctx.createLinearGradient(cx-R,cy-R,cx+R,cy+R);
+    g.addColorStop(0, __pieSlices[i].color);
+    g.addColorStop(1, 'hsl(220 30% 18%)');
+    ctx.fillStyle = g;
+    ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=12;
+    ctx.fill(); ctx.shadowBlur=0;
+
+    a0 = a1;
   });
-  const bar = new Chart(document.getElementById('bar'), {
-    type: 'bar',
-    data: {
-      labels: ['Wk1', 'Wk2', 'Wk3', 'Wk4'],
-      datasets: [
-        { label: 'Stock In', data: [50, 75, 60, 90], backgroundColor: 'rgba(125, 245, 255, 0.6)' },
-        { label: 'Stock Out', data: [30, 40, 35, 70], backgroundColor: 'rgba(155, 125, 255, 0.6)' }
-      ]
-    },
-    options: { plugins: { legend: { position: 'bottom', labels: { color: '#cfd6ff' } } }, scales: { y: { beginAtZero: true, ticks: { color: '#cfd6ff' } }, x: { ticks: { color: '#cfd6ff' } } } }
+
+  // center label
+  ctx.fillStyle="#cbd5e1"; ctx.font="600 14px system-ui";
+  ctx.textAlign="center"; ctx.fillText("Category Split", cx, cy-6);
+  ctx.font="12px system-ui"; ctx.fillStyle="#94a3b8";
+  ctx.fillText(`${data.length} categories`, cx, cy+12);
+
+  // hover interaction
+  const onMove = (evt)=>{
+    const rect = cvs.getBoundingClientRect();
+    const x = evt.clientX - rect.left, y = evt.clientY - rect.top;
+    const dx = x - cx, dy = y - cy, rr = Math.hypot(dx,dy);
+    if (rr < r || rr > R){ tip.style.display='none'; cvs.style.cursor='default'; redraw(); return; }
+    // angle 0 at -PI/2
+    let ang = Math.atan2(dy,dx);
+    if (ang < -Math.PI/2) ang += Math.PI*2;
+    let hit = -1;
+    __pieSlices.forEach((sl,idx)=>{ if (ang>=sl.s && ang<=sl.e) hit=idx; });
+
+    if (hit===-1){ tip.style.display='none'; cvs.style.cursor='default'; redraw(); return; }
+    cvs.style.cursor='pointer';
+    const s = __pieSlices[hit];
+    tip.textContent = `${s.category} – ${Math.round(s.qty)}`;
+    tip.style.left = `${evt.clientX}px`;
+    tip.style.top = `${evt.clientY}px`;
+    tip.style.display = 'block';
+    redraw(hit);
+  };
+
+  const onLeave = ()=>{ tip.style.display='none'; cvs.style.cursor='default'; redraw(); };
+
+  function redraw(highlight=-1){
+    ctx.clearRect(0,0,W,H);
+    __pieSlices.forEach((sl,idx)=>{
+      const bump = (idx===highlight) ? 6 : 0;
+      const mx = Math.cos((sl.s+sl.e)/2)*bump, my = Math.sin((sl.s+sl.e)/2)*bump;
+      ctx.beginPath();
+      ctx.arc(cx+mx,cy+my,R,sl.s,sl.e,false);
+      ctx.arc(cx+mx,cy+my,r,sl.e,sl.s,true);
+      ctx.closePath();
+      ctx.fillStyle = sl.color; ctx.globalAlpha = (idx===highlight)? 1 : 0.92;
+      ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=(idx===highlight)? 18 : 8;
+      ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+    });
+    // center text again
+    ctx.fillStyle="#cbd5e1"; ctx.font="600 14px system-ui";
+    ctx.textAlign="center"; ctx.fillText("Category Split", cx, cy-6);
+    ctx.font="12px system-ui"; ctx.fillStyle="#94a3b8";
+    ctx.fillText(`${data.length} categories`, cx, cy+12);
+  }
+
+  cvs.onmousemove = onMove;
+  cvs.onmouseleave = onLeave;
+}
+
+
+/* Canvas weekly line renderer — draws into #weeklyCanvas if present */
+// gradient line with hover tooltip
+function renderWeekly(data) {
+  const cvs = document.getElementById('weeklyCanvas'); if (!cvs) return;
+  const tip = document.getElementById('chartTip');
+  const ctx = cvs.getContext('2d'); const W=cvs.width, H=cvs.height;
+  ctx.clearRect(0,0,W,H);
+  const L=56,R=10,T=14,B=34;
+
+  const maxQ = Math.max(1, ...data.map(d=>d.qty||0));
+  const n = Math.max(1, data.length);
+  const stepX = (W - L - R) / Math.max(1,n-1);
+
+  // axes + grid
+  ctx.strokeStyle="#2b3546"; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(L,T); ctx.lineTo(L,H-B); ctx.lineTo(W-R,H-B); ctx.stroke();
+
+  ctx.fillStyle="#94a3b8"; ctx.font="11px system-ui";
+  for (let i=0;i<=4;i++){
+    const q = Math.round((i/4)*maxQ);
+    const y = H-B - ((H-B-T) * (q/maxQ));
+    ctx.fillText(String(q), 8, y+4);
+    ctx.strokeStyle="rgba(148,163,184,.16)";
+    ctx.beginPath(); ctx.moveTo(L,y); ctx.lineTo(W-R,y); ctx.stroke();
+  }
+
+  // gradient under line
+  const g = ctx.createLinearGradient(0,T,0,H-B);
+  g.addColorStop(0,'hsla(262, 83%, 62%, .35)');
+  g.addColorStop(1,'hsla(262, 83%, 62%, 0)');
+
+  // line path + area
+  ctx.beginPath();
+  data.forEach((d,i)=>{
+    const x = L + i*stepX;
+    const y = H-B - ((H-B-T) * ((d.qty||0)/maxQ));
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle='hsl(262 83% 62%)'; ctx.lineWidth=2; ctx.stroke();
+
+  // area
+  ctx.lineTo(L + (n-1)*stepX, H-B);
+  ctx.lineTo(L, H-B); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
+
+  // points
+  data.forEach((d,i)=>{
+    const x = L + i*stepX;
+    const y = H-B - ((H-B-T) * ((d.qty||0)/maxQ));
+    ctx.fillStyle='hsl(262 83% 62%)';
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
   });
 
-  // =======================================================
-  // =========== API & DYNAMIC LOGIC STARTS HERE ===========
-  // =======================================================
-  function initializeApi() {
-    // DOM refs
-    const kSkus = document.getElementById('kSkus');
-    const kStock = document.getElementById('kStock');
-    const kPend = document.getElementById('kPend');
-    const kVend = document.getElementById('kVend');
-    const billTable = document.getElementById('billTable');
-    const prodTable = document.getElementById('prodTable');
-    const vendTable = document.getElementById('vendTable');
-    const ocrTable = document.getElementById('ocrTable');
+  // hover
+  cvs.onmousemove = (evt)=>{
+    const rect = cvs.getBoundingClientRect();
+    const mx = evt.clientX - rect.left;
+    const i = Math.max(0, Math.min(n-1, Math.round((mx - L)/stepX)));
+    const x = L + i*stepX;
+    const y = H-B - ((H-B-T) * ((data[i].qty||0)/maxQ));
+    // clear & redraw small crosshair
+    renderWeekly.baseDrawn || (renderWeekly.baseDrawn = ctx.getImageData(0,0,W,H));
+    ctx.putImageData(renderWeekly.baseDrawn,0,0);
+    ctx.strokeStyle='rgba(148,163,184,.35)'; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(x,T); ctx.lineTo(x,H-B); ctx.stroke(); ctx.setLineDash([]);
 
-    const dz = document.getElementById('dz'), fileInput = document.getElementById('file');
-    dz.onclick = () => fileInput.click();
-    dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--brand)'; });
-    dz.addEventListener('dragleave', () => dz.style.borderColor = 'rgba(126,155,255,.35)');
-    dz.addEventListener('drop', e => { e.preventDefault(); fileInput.files = e.dataTransfer.files; dz.style.borderColor = 'rgba(126,155,255,.35)' });
+    // tip
+    tip.textContent = `${data[i].week} – ${Math.round(data[i].qty||0)}`;
+    tip.style.left = `${evt.clientX}px`;
+    tip.style.top = `${evt.clientY}px`;
+    tip.style.display = 'block';
+  };
+  cvs.onmouseleave = ()=>{ tip.style.display='none'; };
+}
 
-    const btnOCR = document.getElementById('btnOCR');
-    const btnApprove = document.getElementById('btnApprove');
+      function App(){
+        // modal (kept to preserve previous feature) — not used by the new expand-in-table UX
+        const [viewerOpen, setViewerOpen] = useState(false);
+        const [viewerLoading, setViewerLoading] = useState(false);
+        const [viewerBill, setViewerBill] = useState(null);
 
-    // ---- Add Product modal handler
-    document.getElementById('btnAddProd').onclick = async () => {
-      const sku = document.getElementById('prodSku').value.trim();
-      const name = document.getElementById('prodName').value.trim();
-      const category = document.getElementById('prodCategory').value.trim();
-      const stock_qty = Number(document.getElementById('prodStock').value || 0);
-      const price = Number(document.getElementById('prodPrice').value || 0);
-      if (!name) { toastMsg.textContent = 'Name is required'; toast.show(); return; }
-      try {
-        const res = await fetch(`${API}/products`, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ sku: sku || null, name, category: category || null, stock_qty, price })
-        });
-        if (!res.ok) throw new Error(await res.text());
-        toastMsg.textContent = 'Product added'; toast.show();
-        await loadProducts(); await loadDashboard();
-      } catch(e){ console.error(e); toastMsg.textContent = 'Failed to add product'; toast.show(); }
-    };
+        async function openBillViewer(id) {
+          setViewerOpen(true);
+          setViewerLoading(true);
+          try {
+            const r = await fetch(API + "/bills/" + id, { cache: "no-store" });
+            const raw = r.ok ? await r.json() : null;
+            setViewerBill(mapServerBill(raw || {}));
+          } finally {
+            setViewerLoading(false);
+          }
+        }
 
-    // ---- Add Vendor modal handler
-    document.getElementById('btnAddVend').onclick = async () => {
-      const name = document.getElementById('vendName').value.trim();
-      const email = document.getElementById('vendEmail').value.trim();
-      const phone = document.getElementById('vendPhone').value.trim();
-      if (!name) { toastMsg.textContent = 'Vendor name is required'; toast.show(); return; }
-      try {
-        const res = await fetch(`${API}/vendors`, {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ name, email: email || null, phone: phone || null })
-        });
-        if (!res.ok) throw new Error(await res.text());
-        toastMsg.textContent = 'Vendor added'; toast.show();
-        await loadVendors();
-      } catch(e){ console.error(e); toastMsg.textContent = 'Failed to add vendor'; toast.show(); }
-    };
+        const API = useMemo(() => {
+          try {
+            const raw = (localStorage.getItem("WARESYS_API") || "").trim();
+            return raw ? raw.replace(/\/+$/, "") : window.location.origin;
+          } catch { return window.location.origin; }
+        }, []);
 
-    // ---- data loaders
-    async function loadDashboard() {
-      try {
-        const res = await fetch(`${API}/dashboard/summary`);
-        if (!res.ok) throw new Error('Failed to fetch dashboard data');
-        const data = await res.json();
-        kSkus.textContent = data.products_total.toLocaleString('en-IN');
-        kStock.textContent = data.stock_total_qty.toLocaleString('en-IN');
-        kPend.textContent = data.bills_pending.toLocaleString('en-IN');
-        donut.data.labels = data.category_breakdown.map(c => c.category);
-        donut.data.datasets[0].data = data.category_breakdown.map(c => c.qty);
-        donut.update();
-      } catch (e) {
-        console.error(e);
-        toastMsg.textContent = 'Error loading dashboard. Is the backend running?'; toast.show();
+        // role / tabs
+        const [role, setRole] = useState(() => localStorage.getItem("WARESYS_ROLE") || "manager");
+        useEffect(()=>localStorage.setItem("WARESYS_ROLE", role), [role]);
+        const [tab, setTab] = useState("dashboard");
+
+        const [kpi, setKpi] = useState({ invoicesToday: 0, linesToday: 0, accuracy: 0, stockValue: 0 });
+
+        // bills list
+        const [loadingBills, setLoadingBills] = useState(true);
+        const [bills, setBills] = useState([]);
+        // Recompute dashboard KPIs from the fetched bills
+useEffect(()=>{
+  const normalized = (bills || []).map(b => mapServerBill(b));
+
+  // Invoices parsed today
+  const todayKey = new Date().toISOString().slice(0,10);
+  const invoicesToday = normalized.filter(b => (b.bill_date || '').slice(0,10) === todayKey).length;
+
+  // Lines parsed (total across all bills)
+  const linesToday = normalized.reduce((s,b)=> s + ((b.lines && b.lines.length) || 0), 0);
+
+  // Parser accuracy (avg of ocr_confidence/accuracy fields if present)
+  const accVals = normalized
+    .map(b => Number(b.accuracy ?? b.ocr_confidence ?? 0))
+    .filter(v => v > 0 && isFinite(v));
+  const accuracy = accVals.length ? (accVals.reduce((a,v)=>a+v,0) / accVals.length) : 0;
+
+  // Stock value = sum(qty * unit_price) for categorized items only
+  let stockValue = 0;
+  normalized.forEach(b => (b.lines || []).forEach(ln => {
+    const tag = categorizeHSN(ln.hsn);
+    if (!tag) return;
+    stockValue += (Number(ln.qty)||0) * (Number(ln.unit_price ?? ln.rate) || 0);
+  }));
+
+  setKpi({ invoicesToday, linesToday, accuracy, stockValue });
+}, [bills]);
+
+        async function refreshRecent() {
+          setLoadingBills(true);
+          try{
+            await fetch(API + "/api/health", { cache: "no-store" }).catch(()=>null);
+            const r = await fetch(API + "/bills?limit=12", { cache: "no-store" }).catch(()=>null);
+            const data = r && r.ok ? await r.json() : demoBills();
+            setBills(data);
+          } catch {
+            setBills(demoBills());
+          } finally {
+            setLoadingBills(false);
+          }
+        }
+        useEffect(()=>{ refreshRecent(); },[API]);
+        // Build products for the Stock tab from scanned bills (top-level hook; not conditional)
+const stockProducts = useMemo(
+  () => buildProductsFromBills((bills || []).map(b => mapServerBill(b))),
+  [bills]
+);
+
+        // When CDN charts are blocked, draw local canvas charts using parsed bills
+useEffect(()=>{
+  if (window.Recharts && window.Recharts.BarChart && window.Recharts.PieChart) return; // CDN available → do nothing
+  // normalize bills once using your existing mapper
+  const normalized = (bills || []).map(b => mapServerBill(b));
+  const { pieData, weeklyData } = buildCategoryAggregates(normalized);
+  // give the UI a tick to mount canvases (no-op if not present)
+  requestAnimationFrame(()=>{
+    renderPie(pieData);
+    renderWeekly(weeklyData);
+  });
+}, [bills]);
+
+
+        // products/stock
+        const [loadingProducts, setLoadingProducts] = useState(true);
+        const [products, setProducts] = useState([]);
+        useEffect(()=>{
+          let cancel=false;
+          (async()=>{
+            setLoadingProducts(true);
+            try{
+              const r = await fetch(API + "/products", { cache:"no-store" }).catch(()=>null);
+              const data = r && r.ok ? await r.json() : demoProducts();
+              if(!cancel) setProducts(data);
+            } catch {
+              if(!cancel) setProducts(demoProducts());
+            } finally {
+              if(!cancel) setLoadingProducts(false);
+            }
+          })();
+          return ()=>{cancel=true};
+        },[API]);
+
+        // charts
+        const weekly = useMemo(()=>Array.from({length:7}).map((_,i)=>({
+          d:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i],
+          invoices:[60,72,81,50,95,110,76][i],
+          lines:[420,505,600,390,720,810,560][i],
+        })),[]);
+        const pieCats = useMemo(()=>[
+          {name:"Tiles", value:72},{name:"Pipes", value:54},{name:"WC", value:31},{name:"Fittings", value:62}
+        ],[]);
+
+        // OCR inbox
+        const [uploading,setUploading]=useState(false);
+        const [pct,setPct]=useState(0);
+        const [step,setStep]=useState(0); // 0..6
+        const fileRef=useRef(null);
+        const [vendorInput,setVendorInput]=useState("");
+        const [billDateInput, setBillDateInput] = useState(""); // YYYY-MM-DD from <input type="date">
+        const [extracted,setExtracted]=useState(null);
+        const [lastBillId,setLastBillId]=useState(null);
+
+        const startPipeline = () => {
+          setStep(0);
+          let s=0; const t=setInterval(()=>{ s+=1; setStep(s); if(s>=6) clearInterval(t); }, 650);
+        };
+
+        const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
+
+        const startUpload = async (files)=>{
+          if(!files || !files.length) return;
+          if(!(vendorInput && vendorInput.trim())) {
+            alert("Please enter the Vendor name before parsing.");
+            return;
+          }
+          if(!billDateInput){
+            alert("Please select the Invoice Date before parsing.");
+            return;
+          }
+          setUploading(true); setPct(0);
+          const timer=setInterval(()=>setPct(p=>p>=95?95:p+4),80);
+          try{
+            const fd = new FormData();
+            Array.from(files).forEach(f=>fd.append("file", f));
+            if (vendorInput.trim()) fd.append("party_name", vendorInput.trim());
+            fd.append("bill_date", billDateInput); // YYYY-MM-DD
+
+
+            const r = await fetch(API + "/bills/ocr", { method:"POST", body: fd }).catch(()=>null);
+            const data = r && r.ok ? await r.json() : {};
+            setPct(100); clearInterval(timer); startPipeline();
+
+            const id = data.bill_id || data.id;
+            setLastBillId(id || null);
+
+            // Poll until processed
+            let tries = 0, bill = null;
+            while (id && tries < 30) {
+              await sleep(1500);
+              const r2 = await fetch(API + "/bills/" + id, { cache: "no-store" }).catch(()=>null);
+              if (r2 && r2.ok) {
+                const raw = await r2.json();
+                if (raw?.status === "PROCESSED" && Array.isArray(raw.lines) && raw.lines.length) {
+                  bill = mapServerBill(raw);
+                  break;
+                }
+              }
+              tries++;
+            }
+            if (bill) setExtracted(bill);
+            await refreshRecent();
+
+          } finally {
+            clearInterval(timer); setUploading(false);
+          }
+        };
+
+        const onUploadClick = ()=>{ setTab("ocr"); setTimeout(()=>fileRef.current?.click(), 60); };
+
+        // Fetch one bill (used by table expand)
+        async function fetchBillById(id){
+          const r = await fetch(API + "/bills/" + id, { cache: "no-store" }).catch(()=>null);
+          if (r && r.ok) {
+            const raw = await r.json();
+            return mapServerBill(raw);
+          }
+          return null;
+        }
+
+        return (
+          <div className="min-h-screen">
+            <div className="pointer-events-none fixed inset-x-0 top-0 h-40 bg-gradient-to-b from-violet-200/60 via-fuchsia-100/40 to-transparent blur-2xl"></div>
+
+            <div className="flex">
+              <Sidebar tab={tab} setTab={setTab} onUploadClick={onUploadClick} />
+
+              <main className="flex-1 p-4 md:p-6 xl:p-8">
+                <Topbar role={role} setRole={setRole} />
+
+                {tab==="dashboard" && (
+                  <>
+                    <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <KPI title="Invoices Parsed (today)" value={kpi.invoicesToday} delta="+12%" />
+                      <KPI title="Line Items Parsed" value={kpi.linesToday} delta="+8%" />
+                      <KPI title="Parser Accuracy" value={kpi.accuracy.toFixed(1) + '%'} delta="+0.6%" />
+                      <KPI title="Total Stock Value" value={fmtINR(kpi.stockValue*100000)} delta="+₹1.2L" />
+                    </section>
+{(!window.Recharts || !window.Recharts.BarChart || !window.Recharts.PieChart) && (
+  <section className="mt-6 grid gap-6 lg:grid-cols-3">
+    <Card className="lg:col-span-2">
+      <CardHeader title="Weekly Throughput" subtitle="Invoices vs line items" />
+      <div className="h-56 px-2 pb-4 flex items-center">
+        <canvas id="weeklyCanvas" width="640" height="220" className="w-full"></canvas>
+      </div>
+    </Card>
+    <Card>
+      <CardHeader title="Category Split" subtitle="Products by category" />
+
+      <div className="h-56 px-2 pb-4 flex items-center">
+        <canvas id="pieCanvas" width="520" height="220" className="w-full"></canvas>
+      </div>
+    </Card>
+  </section>
+)}
+
+                    <Card className="mt-6">
+                      <CardHeader title="Recent OCR Documents" subtitle="Latest uploads and statuses" />
+                      <RecentTable
+                        rows={bills}
+                        loading={loadingBills}
+                        fetchBillById={fetchBillById}
+                      />
+                    </Card>
+                  </>
+                )}
+
+                {tab==="ocr" && (
+                  <section className="grid gap-6">
+                    <Card>
+                      <CardHeader title="OCR Pipeline" subtitle="Upload → OCR → Parse → Match → Validate → Stock" />
+                      <div className="px-4 pb-4">
+                        <Pipeline step={step} />
+                        <div className="mt-4 grid gap-4 md:grid-cols-3">
+                          <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-4">
+                            <Uploader
+                              inputRef={fileRef}
+                              uploading={uploading}
+                              percent={pct}
+                              vendorProvided={!!(vendorInput && vendorInput.trim())}
+                              onFiles={fl => startUpload(fl)}
+                            />
+                            <div className="mt-3 flex items-center gap-2">
+                              <label className="text-sm text-slate-600">Vendor Name (required):</label>
+                              <input
+                                value={vendorInput}
+                                onChange={e=>setVendorInput(e.target.value)}
+                                placeholder="e.g., A2Z Buildwares"
+                                className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm w-64"
+                              />
+                            </div>
+                            <div className="mt-3 flex items-center gap-2">
+  <label className="text-sm text-slate-600">Invoice Date (required):</label>
+  <input
+    type="date"
+    value={billDateInput}
+    onChange={e=>setBillDateInput(e.target.value)}
+    className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm w-48"
+  />
+</div>
+
+                          </div>
+                          <div className="rounded-xl border border-slate-200 bg-white p-4">
+                            <div className="text-sm font-semibold mb-2">Extracted Header</div>
+                            {!extracted && <div className="text-sm text-slate-500">Upload a bill to see OCR’d header.</div>}
+                            {extracted && (
+                              <dl className="text-sm grid grid-cols-3 gap-x-3 gap-y-2">
+                                <dt className="text-slate-500">Bill #</dt><dd className="col-span-2">{extracted.bill_no || "—"}</dd>
+                                <dt className="text-slate-500">Date</dt><dd className="col-span-2">{fmtDate(extracted.bill_date)}</dd>
+                                <dt className="text-slate-500">Vendor</dt><dd className="col-span-2">{(vendorInput && vendorInput.trim()) ? vendorInput.trim() : (extracted.party_name || "—")}</dd>
+                                <dt className="text-slate-500">GST Number</dt><dd className="col-span-2">{extracted.gstin || "—"}</dd>
+                                <dt className="text-slate-500">Total</dt><dd className="col-span-2">{fmtINR(extracted.pre_total ?? extracted.total)}</dd>
+                              </dl>
+                            )}
+                            {lastBillId && <div className="mt-3 text-xs text-slate-500">Bill ID: {lastBillId}</div>}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card>
+                      <CardHeader title="Recent OCR Documents" subtitle="Latest uploads and statuses" />
+                      <RecentTable
+                        rows={bills}
+                        loading={loadingBills}
+                        fetchBillById={fetchBillById}
+                      />
+                    </Card>
+                  </section>
+                )}
+
+                        {tab==="products" && (
+          <Card>
+            <CardHeader title="Categories & HSN" subtitle="Auto-compiled from invoices (HSN groups)" />
+            <CategoryHSN bills={bills} loading={loadingBills} />
+          </Card>
+        )}
+
+
+                {tab==="stock" && (
+  <Card>
+    <CardHeader title="Stock (All Products)" subtitle="From scanned invoices" />
+    <StockTable products={stockProducts} loading={loadingBills} />
+  </Card>
+)}
+
+
+                <div className="mt-8 text-center text-xs text-slate-600">
+                  API: <span className="font-mono">{API}</span>
+                </div>
+
+                {/* Keeps the previous modal feature available if you want it */}
+
+                <BillViewer
+                  open={viewerOpen}
+                  loading={viewerLoading}
+                  bill={viewerBill}
+                  onClose={()=>setViewerOpen(false)}
+                />
+              </main>
+            </div>
+          </div>
+        );
       }
-    }
 
-    async function loadRecentBills() {
-      try {
-        const res = await fetch(`${API}/bills?limit=5`);
-        const bills = await res.json();
-        billTable.innerHTML = bills.map(b => `
+      // ---------------- UI components
+      function Sidebar({ tab, setTab, onUploadClick }){
+        const Item=({label,active,onClick,badge})=>(
+          <button onClick={onClick}
+            className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition
+                        ${active?'bg-violet-50 text-violet-700 ring-1 ring-violet-200':'text-slate-700 hover:bg-slate-100 hover:text-slate-900'}`}>
+            <span>{label}</span>
+            {badge && <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{badge}</span>}
+          </button>
+        );
+        return (
+          <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white/70 p-4 backdrop-blur lg:flex">
+            <div className="mb-6 flex items-center gap-2">
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow">W</div>
+              <div><div className="text-lg font-semibold">Waresys</div><div className="text-[11px] text-slate-500">OCR • Inventory • Analytics</div></div>
+            </div>
+            <nav className="space-y-1">
+              <Item label="Dashboard" active={tab==='dashboard'} onClick={()=>setTab('dashboard')} />
+              <Item label="OCR Inbox" active={tab==='ocr'} onClick={()=>setTab('ocr')} />
+              <Item label="Categories"  active={tab==='products'} onClick={()=>setTab('products')} />
+              <Item label="Stock"     active={tab==='stock'} onClick={()=>setTab('stock')} />
+            </nav>
+            <div className="mt-auto space-y-2">
+              <button
+                onClick={onUploadClick}
+                className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2.5 text-sm font-semibold text-white shadow hover:opacity-95">
+                Upload
+              </button>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-[11px] text-slate-500">
+                Tip: set <span className="font-mono">localStorage.WARESYS_API</span> to point the UI at your backend.
+              </div>
+            </div>
+          </aside>
+        );
+      }
+
+      function Topbar({ role, setRole }){
+        return (
+          <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <input
+                  placeholder="Search bills, vendors, products…"
+                  className="w-[300px] rounded-xl border border-slate-200 bg-white pl-3 pr-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-violet-300" />
+              </div>
+              <span className="hidden rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-500 sm:inline-block">
+                {new Date().toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="relative grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white">
+                🔔
+                <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-fuchsia-500 text-[10px] font-bold text-white">3</span>
+              </button>
+              <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-slate-200 to-slate-100 text-xs font-bold text-slate-700">BV</div>
+            </div>
+          </header>
+        );
+      }
+
+      function KPI({title,value,delta}){
+        return (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-2 text-xs text-slate-500">{title}</div>
+            <div className="flex items-end justify-between">
+              <div className="text-2xl font-semibold tracking-tight text-slate-900">{value}</div>
+              <div className="text-xs text-emerald-600">{delta}</div>
+            </div>
+          </div>
+        );
+      }
+      function Card({children,className=""}){ return <section className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>{children}</section>; }
+      function CardHeader({title,subtitle}){ return (
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+          <div><h3 className="text-sm font-semibold">{title}</h3>{subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}</div>
+          <button className="grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white">⚙️</button>
+        </div>
+      );}
+
+      function Pipeline({step}){
+        const steps = ["Upload","OCR","Parse","Match","Validate","Stock"];
+        return (
+          <ol className="grid grid-cols-6 gap-3">
+            {steps.map((name,i)=>{
+              const active = step >= i+1;
+              return (
+                <li key={name} className="flex flex-col items-center">
+                  <div className={`grid h-12 w-12 place-items-center rounded-2xl border transition
+                    ${active?'border-emerald-400/60 bg-emerald-50':'border-slate-200 bg-white'}`}>
+                    <span className={active?"text-emerald-600":"text-slate-500"}>{active?"✔":"○"}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-600">{name}</p>
+                </li>
+              );
+            })}
+          </ol>
+        );
+      }
+
+      // UPDATED: shows file name(s) + Clear, and blocks Choose until vendor is provided
+      function Uploader({inputRef, uploading, percent, onFiles, vendorProvided}){
+        const [drag,setDrag]=useState(false);
+        const [fileLabel,setFileLabel]=useState('');
+        const clear = () => {
+          setFileLabel('');
+          if (inputRef.current) inputRef.current.value = '';
+        };
+        const setNames = (fl) => setFileLabel(Array.from(fl||[]).map(f=>f.name).join(', '));
+
+        return (
+          <div onDragOver={(e)=>{e.preventDefault(); setDrag(true);}}
+               onDragLeave={()=>setDrag(false)}
+               onDrop={(e)=>{e.preventDefault(); setDrag(false); setNames(e.dataTransfer.files); onFiles(e.dataTransfer.files);}}
+               className={`grid place-items-center rounded-xl border-2 border-dashed p-6 text-center ${drag?'border-violet-400/80 bg-violet-50':'border-slate-300'}`}>
+            <input ref={inputRef} type="file" accept=".pdf,image/*" className="hidden"
+                   onChange={(e)=>{ setNames(e.target.files); onFiles(e.target.files); }} />
+            <div className="text-2xl mb-1 text-violet-600">⬆</div>
+            <p className="text-sm text-slate-700">Drag & drop invoices (PDF/JPG/PNG) or</p>
+            <button onClick={()=>inputRef.current?.click()}
+              className="mt-2 inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+              style={{background: vendorProvided ? 'linear-gradient(90deg,#7c3aed,#ec4899)' : '#cbd5e1'}}
+              disabled={!vendorProvided}
+              title={vendorProvided ? "Select file(s)" : "Enter vendor name first"}>
+              Choose Files
+            </button>
+
+            {fileLabel && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-slate-600">
+                <span className="font-medium truncate max-w-[60ch]">Selected: {fileLabel}</span>
+                <button onClick={clear} className="rounded border border-slate-300 px-2 py-0.5 hover:bg-slate-50">Clear</button>
+              </div>
+            )}
+
+            {uploading && (
+              <div className="mt-4 w-full">
+                <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
+                  <span>Uploading</span><span>{percent}%</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-200">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500" style={{width:percent+"%"}}></div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // UPDATED: expands a row inline to show header (5 fields) + full lines
+      function RecentTable({rows, loading, fetchBillById}){
+        const [expandedId, setExpandedId] = useState(null);
+        const [detailById, setDetailById] = useState({});
+        const [loadingDetail, setLoadingDetail] = useState(false);
+
+        async function toggleExpand(id){
+          if (expandedId === id) { setExpandedId(null); return; }
+          if (!detailById[id]) {
+            setLoadingDetail(true);
+            const d = await fetchBillById(id);
+            setDetailById(prev => ({...prev, [id]: d}));
+            setLoadingDetail(false);
+          }
+          setExpandedId(id);
+        }
+
+        return (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Bill #</th>
+                  <th className="px-4 py-3">Vendor</th>
+                  <th className="px-4 py-3">Date</th>
+                  <th className="px-4 py-3">Lines</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Confidence</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading && <tr><td className="px-4 py-10 text-center text-slate-500" colSpan="6">Loading…</td></tr>}
+                {!loading && rows.map((r,i)=>{
+                  const id = r.bill_id || r.id;
+                  const isOpen = expandedId === id;
+                  const detail = detailById[id];
+                  return (
+                    <React.Fragment key={id || i}>
+                      <tr className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-3 font-mono">{r.bill_no || id || "—"}</td>
+                        {/* Only show the user-provided vendor (party_name) */}
+                        <td className="px-4 py-3">{r.party_name || "—"}</td>
+                        <td className="px-4 py-3">{fmtDate(r.bill_date)}</td>
+                        <td className="px-4 py-3">{r.lines?.length ?? r.line_count ?? "—"}</td>
+                        <td className="px-4 py-3">{(r.status||"").toUpperCase()}</td>
+                        <td className="px-4 py-3">{r.accuracy? r.accuracy+"%":"—"}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={()=>toggleExpand(id)}
+                            className="rounded-lg border border-slate-200 px-2 py-1 text-xs hover:bg-slate-50">
+                            {isOpen ? "Close" : "Open"}
+                          </button>
+                        </td>
+                      </tr>
+
+                      {isOpen && (
+                        <tr className="bg-white">
+                          <td colSpan="7" className="px-4 pb-5">
+                            {loadingDetail && !detail ? (
+                              <div className="py-6 text-center text-slate-500">Loading details…</div>
+                            ) : detail ? (
+                              <div className="mt-3">
+                               {/* Header */}
+                                <div className="mb-3 grid grid-cols-2 gap-4">
+                                  <div className="rounded-xl border border-slate-200 p-3">
+                                    <div className="text-sm font-semibold mb-2">Header</div>
+                                    <dl className="text-sm grid grid-cols-3 gap-x-3 gap-y-2">
+                                      <dt className="text-slate-500">Bill #</dt><dd className="col-span-2">{detail.bill_no || "—"}</dd>
+                                      <dt className="text-slate-500">Date</dt><dd className="col-span-2">{fmtDate(detail.bill_date)}</dd>
+                                      <dt className="text-slate-500">Vendor</dt><dd className="col-span-2">{detail.party_name || "—"}</dd>
+                                      <dt className="text-slate-500">GST Number</dt><dd className="col-span-2">{detail.gstin || "—"}</dd>
+                                      <dt className="text-slate-500">Total</dt><dd className="col-span-2">{fmtINR(detail.pre_total ?? detail.total)}</dd>
+                                    </dl>
+                                  </div>
+                                </div>
+
+                               {/* Lines */}
+                                <div className="rounded-xl border border-slate-200">
+                                  <table className="min-w-full text-sm">
+                                    <thead className="bg-slate-50 text-slate-500">
+                                      <tr>
+                                        <th className="px-3 py-2 text-left">#</th>
+                                        <th className="px-3 py-2 text-left">Description</th>
+                                        <th className="px-3 py-2 text-left">HSN</th>
+                                        <th className="px-3 py-2 text-left">UOM</th>
+                                        <th className="px-3 py-2 text-right">Qty</th>
+                                        <th className="px-3 py-2 text-right">Rate</th>
+                                        <th className="px-3 py-2 text-right">Amount</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {(detail.lines || []).map((ln, j) => (
+                                        <tr key={j} className="border-t">
+                                          <td className="px-3 py-2">{ln.idx || j+1}</td>
+                                          <td className="px-3 py-2">{ln.description}</td>
+                                          <td className="px-3 py-2">{ln.hsn}</td>
+                                          <td className="px-3 py-2">{ln.uom}</td>
+                                          <td className="px-3 py-2 text-right">{ln.qty}</td>
+                                          <td className="px-3 py-2 text-right">{fmtINR(ln.rate)}</td>
+                                          <td className="px-3 py-2 text-right">{fmtINR(ln.amount)}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="py-6 text-center text-slate-500">No details available.</div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+
+      function CategoryHSN({bills,loading}){
+  // Build one row per category using HSN_GROUPS and counts from your invoices
+  const rows = React.useMemo(()=>{
+    // normalize bills to the shape buildCategoryAggregates expects
+    const normalized = (bills || []).map(b => mapServerBill(b));
+    const { pieData } = buildCategoryAggregates(normalized);
+    // stitch the HSN list from your config + match counts from pieData
+    return Object.entries(HSN_GROUPS).map(([category, hsns])=>{
+      const found = pieData.find(d => d.category === category);
+      return { category, hsn: hsns.join(", "), count: Math.round(found?.qty || 0) };
+    });
+  },[bills]);
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full text-left text-sm">
+        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
-            <td>${b.bill_no || 'N/A'}</td>
-            <td>${b.party_name || 'N/A'}</td>
-            <td>${b.bill_date}</td>
-            <td>${b.lines.length}</td>
-            <td>₹ ${INR(b.total)}</td>
-            <td><span class="chip ${b.status === 'PROCESSED' || b.status === 'CONFIRMED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
-          </tr>`).join('');
-      } catch(e){ console.error(e); }
-    }
+            <th className="px-4 py-3">Category</th>
+            <th className="px-4 py-3">HSN</th>
+            <th className="px-4 py-3"># Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading && <tr><td colSpan="3" className="px-4 py-10 text-center text-slate-500">Loading…</td></tr>}
+          {!loading && rows.map((row,i)=>(
+            <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+              <td className="px-4 py-3 font-medium text-slate-800">{row.category}</td>
+              <td className="px-4 py-3">{row.hsn || "—"}</td>
+              <td className="px-4 py-3">{row.count}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+      function StockTable({products,loading}){
+        return (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Category</th>
+                  <th className="px-4 py-3">HSN</th>
+                  <th className="px-4 py-3">Price</th>
+                  <th className="px-4 py-3">Stock Qty</th>
+                  <th className="px-4 py-3">Reorder</th>
 
-    async function loadProducts() {
-      try {
-        const res = await fetch(`${API}/products`);
-        const products = await res.json();
-        prodTable.innerHTML = products.map(p => `
-          <tr>
-            <td>${p.sku}</td>
-            <td>${p.name}</td>
-            <td>${p.category || 'N/A'}</td>
-            <td>${p.stock_qty}</td>
-            <td>₹ ${INR(p.price)}</td>
-            <td><button class="btn btn-outline btn-sm">Edit</button></td>
-          </tr>`).join('');
-      } catch(e){ console.error(e); }
-    }
-
-    async function loadVendors() {
-      try {
-        const res = await fetch(`${API}/vendors`);
-        const vendors = await res.json();
-        kVend.textContent = vendors.length;
-        vendTable.innerHTML = vendors.map(v => `
-          <tr>
-            <td>${v.name}</td>
-            <td>${v.email || 'N/A'}</td>
-            <td>${v.phone || 'N/A'}</td>
-            <td>0</td>
-            <td><button class="btn btn-outline btn-sm">Edit</button></td>
-          </tr>`).join('');
-      } catch(e){ console.error(e); }
-    }
-
-    async function loadOcrInbox() {
-      try {
-        const res = await fetch(`${API}/bills?limit=20`);
-        const bills = await res.json();
-        ocrTable.innerHTML = bills
-          .filter(b => b.status === 'PENDING' || b.status === 'PROCESSED')
-          .map(b => `
-            <tr data-bill-id="${b.id}">
-              <td><input type="checkbox"></td>
-              <td>${b.bill_no || 'N/A'}</td>
-              <td>${b.party_name || 'N/A'}</td>
-              <td>${b.bill_date}</td>
-              <td>${b.lines.length}</td>
-              <td>₹ ${INR(b.total)}</td>
-              <td><span class="chip ${b.status === 'PROCESSED' ? 'chip-ok' : 'chip-warn'}">${b.status}</span></td>
-            </tr>`).join('');
-      } catch(e){ console.error(e); }
-    }
-    // --- row click -> open details modal
-document.getElementById('ocrTable').addEventListener('click', async (e) => {
-  const tr = e.target.closest('tr'); if (!tr) return;
-  const id = tr.dataset.billId;
-  try {
-    const res = await fetch(`${API}/bills/${id}`);
-    if (!res.ok) throw new Error(await res.text());
-    const b = await res.json();
-
-    // header fields
-    document.getElementById('bmBillNo').textContent = b.bill_no || '—';
-    document.getElementById('bmVendor').textContent = b.party_name || '—';
-    document.getElementById('bmDate').textContent   = b.bill_date || '—';
-    const st = document.getElementById('bmStatus');
-    st.textContent = b.status;
-    st.className = 'chip ' + (b.status === 'PROCESSED' ? 'chip-ok' : 'chip-warn');
-
-    // lines
-    const tbody = document.getElementById('bmLines');
-    tbody.innerHTML = (b.lines || []).map((ln, i) => `
-      <tr>
-        <td>${i+1}</td>
-        <td>${ln.description_raw ?? ln.description ?? ''}</td>
-        <td>${ln.hsn ?? ''}</td>
-        <td>${ln.uom ?? ''}</td>
-        <td class="text-end">${Number(ln.qty ?? 0)}</td>
-        <td class="text-end">₹ ${INR(ln.unit_price ?? ln.rate ?? 0)}</td>
-        <td class="text-end">₹ ${INR(ln.line_total ?? ln.amount ?? 0)}</td>
-      </tr>
-    `).join('');
-
-    // total
-    document.getElementById('bmTotal').textContent = '₹ ' + INR(b.total ?? 0);
-
-    // approve button on this specific bill
-    const btn = document.getElementById('bmApprove');
-    btn.onclick = async () => {
-      try {
-        const r = await fetch(`${API}/bills/${id}/confirm`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ bill_type:'PURCHASE' })
-        });
-        if (!r.ok) throw new Error(await r.text());
-        // refresh lists and close
-        await Promise.all([loadOcrInbox(), loadRecentBills(), loadDashboard()]);
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('billModal')).hide();
-        toastMsg.textContent = `Bill #${b.bill_no || id} approved.`; toast.show();
-      } catch (e) {
-        console.error(e); toastMsg.textContent = `Approve failed: ${e.message}`; toast.show();
+                </tr>
+              </thead>
+              <tbody>
+                {loading && <tr><td colSpan="6" className="px-4 py-10 text-center text-slate-500">Loading…</td></tr>}
+                {!loading && products.map((p,i)=>(
+                  <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-4 py-3">{p.name || p.product_name || "—"}</td>
+                    <td className="px-4 py-3">{p.category || "—"}</td>
+                    <td className="px-4 py-3">{p.hsn || p.HSN || "—"}</td>
+                    <td className="px-4 py-3">{fmtINR(p.price)}</td>
+                    <td className="px-4 py-3">{p.stock_qty ?? p.qty ?? "0"}</td>
+                    <td className="px-4 py-3">{p.reorder_point ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
       }
-    };
 
-    // show modal
-    bootstrap.Modal.getOrCreateInstance(document.getElementById('billModal')).show();
-  } catch (e) {
-    console.error(e);
-  }
-});
+      // kept for completeness (not used by expand-in-table)
+      function BillViewer({open, loading, bill, onClose}) {
+        if (!open) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="max-h-[90vh] w-[960px] overflow-auto rounded-2xl bg-white shadow-xl">
+              <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
+                <div className="font-semibold">Bill Details</div>
+                <button onClick={onClose} className="rounded border border-slate-200 px-2 py-1 text-sm">Close</button>
+              </div>
 
-    // ---- events
-    btnOCR.onclick = async () => {
-      if (!fileInput.files.length) { toastMsg.textContent = 'Please select a file to upload.'; toast.show(); return; }
-      const file = fileInput.files[0];
-      const formData = new FormData(); formData.append('file', file);
-      btnOCR.disabled = true;
-      const pbWrap = document.querySelector('#bills .progress'), pb = document.getElementById('pb');
-      pbWrap.style.display = 'block'; pb.style.width = '50%';
-      try {
-        const res = await fetch(`${API}/bills/ocr`, { method: 'POST', body: formData });
-        if (!res.ok) { const err = await res.json().catch(()=>({})); throw new Error(err.detail || 'Upload failed'); }
-        const result = await res.json();
-        pb.style.width = '100%';
-        toastMsg.textContent = result.message; toast.show();
-        await loadOcrInbox();
-      } catch (e) {
-        console.error(e);
-        toastMsg.textContent = `Error: ${e.message}`; toast.show();
-      } finally {
-        setTimeout(()=>{ pbWrap.style.display='none'; btnOCR.disabled=false; }, 500);
+              <div className="p-4">
+                {loading && <div className="text-slate-500 text-sm">Loading…</div>}
+                {!loading && bill && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="rounded-xl border border-slate-200 p-3">
+                        <div className="text-sm font-semibold mb-2">Header</div>
+                        <dl className="text-sm grid grid-cols-3 gap-x-3 gap-y-1">
+                          <dt className="text-slate-500">Bill #</dt><dd className="col-span-2">{bill.bill_no || "—"}</dd>
+                          <dt className="text-slate-500">Date</dt><dd className="col-span-2">{fmtDate(bill.bill_date)}</dd>
+                          <dt className="text-slate-500">Vendor</dt><dd className="col-span-2">{bill.party_name || "—"}</dd>
+                          <dt className="text-slate-500">GST Number</dt><dd className="col-span-2">{bill.gstin || "—"}</dd>
+                          <dt className="text-slate-500">Total</dt><dd className="col-span-2">{fmtINR(bill.pre_total ?? bill.total)}</dd>
+                        </dl>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-slate-200">
+                      <table className="min-w-full text-sm">
+                        <thead className="bg-slate-50 text-slate-500">
+                          <tr>
+                            <th className="px-3 py-2 text-left">#</th>
+                            <th className="px-3 py-2 text-left">Description</th>
+                            <th className="px-3 py-2 text-left">HSN</th>
+                            <th className="px-3 py-2 text-left">UOM</th>
+                            <th className="px-3 py-2 text-right">Qty</th>
+                            <th className="px-3 py-2 text-right">Rate</th>
+                            <th className="px-3 py-2 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(bill.lines || []).map((ln, i) => (
+                            <tr key={i} className="border-t">
+                              <td className="px-3 py-2">{ln.idx || i+1}</td>
+                              <td className="px-3 py-2">{ln.description}</td>
+                              <td className="px-3 py-2">{ln.hsn}</td>
+                              <td className="px-3 py-2">{ln.uom}</td>
+                              <td className="px-3 py-2 text-right">{ln.qty}</td>
+                              <td className="px-3 py-2 text-right">{fmtINR(ln.rate)}</td>
+                              <td className="px-3 py-2 text-right">{fmtINR(ln.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
       }
-    };
 
-    btnApprove.onclick = async () => {
-      const targets = Array.from(ocrTable.querySelectorAll('tr'))
-        .filter(r => r.querySelector('input[type=checkbox]')?.checked)
-        .map(r => ({ id: r.dataset.billId, tr: r }));
-      if (targets.length === 0) { toastMsg.textContent = 'No rows selected for approval.'; toast.show(); return; }
-      let ok=0, fail=0;
-      for (const t of targets) {
-        try {
-          const r = await fetch(`${API}/bills/${t.id}/confirm`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ bill_type:'PURCHASE' })
-          });
-          if (!r.ok) throw new Error(await r.text());
-          ok++; t.tr.querySelector('td:last-child').innerHTML = `<span class="chip chip-ok">CONFIRMED</span>`;
-          t.tr.querySelector('input[type=checkbox]').checked = false;
-        } catch(e){ console.error('Approve failed', t.id, e); fail++; }
-      }
-      await Promise.all([loadDashboard(), loadRecentBills()]);
-      toastMsg.textContent = `Approved ${ok} bill(s)` + (fail ? `, ${fail} failed` : ''); toast.show();
-    };
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+    <div id="chartTip" class="chart-tip"></div>
 
-    // ---- initial loads
-    loadDashboard(); loadRecentBills(); loadProducts(); loadVendors(); loadOcrInbox();
-
-    // ---- OCR inbox polling (bills tab only)
-    if (window._ocrPoll) clearInterval(window._ocrPoll);
-    window._ocrPoll = setInterval(() => {
-      if (document.getElementById('bills').classList.contains('active')) loadOcrInbox();
-    }, 5000);
-  }
-</script>
-</body>
+  </body>
 </html>
