@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import text, func
+from sqlalchemy import text, func, or_
 from typing import List
 
 from .config import settings
@@ -28,10 +28,14 @@ TASK_NAME = os.getenv("OCR_TASK_NAME", "app.tasks.process_invoice")
 OCR_SYNC = os.getenv("OCR_SYNC", "0") == "1"      # set to "1" to process inline during swagger demos
 
 app = FastAPI(title="Waresys MVP", version="1.0")
+@app.get("/api/health")
+def api_health():
+    return {"ok": True, "service": "waresys-api"}
+
 app.include_router(auth_router)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # demo friendly
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -248,6 +252,75 @@ def resolve_review(review_id: int, req: schemas.ReviewResolve, db: Session = Dep
     if not review:
         raise HTTPException(404, "Review not found")
     return review
+@app.get("/search")
+def global_search(q: str, db: Session = Depends(get_db)):
+    """
+    Lightweight global search used by the UI:
+      - bills: bill_no / party_name
+      - products: name / category
+      - vendors: name
+    """
+    query = (q or "").strip()
+    if not query:
+        return {"bills": [], "products": [], "vendors": []}
+
+    like = f"%{query}%"
+
+    # Bills
+    bills = (
+        db.query(models.Bill)
+          .filter(or_(
+              models.Bill.bill_no.ilike(like),
+              models.Bill.party_name.ilike(like),
+          ))
+          .order_by(models.Bill.id.desc())
+          .limit(10)
+          .all()
+    )
+    bills_out = [
+        {
+            "id": b.id,
+            "bill_no": b.bill_no,
+            "party_name": b.party_name,
+            "bill_date": str(b.bill_date) if getattr(b, "bill_date", None) else None,
+            "type": "bill",
+        } for b in bills
+    ]
+
+    # Products (avoid ILIKE on numeric HSN to keep it portable)
+    products = (
+        db.query(models.Product)
+          .filter(or_(
+              models.Product.name.ilike(like),
+              models.Product.category.ilike(like),
+          ))
+          .order_by(models.Product.id.desc())
+          .limit(10)
+          .all()
+    )
+    products_out = [
+        {
+            "id": p.id,
+            "name": getattr(p, "name", None),
+            "category": getattr(p, "category", None),
+            "hsn": getattr(p, "hsn", None),
+            "type": "product",
+        } for p in products
+    ]
+
+    # Vendors
+    vendors = (
+        db.query(models.Vendor)
+          .filter(models.Vendor.name.ilike(like))
+          .order_by(models.Vendor.id.desc())
+          .limit(10)
+          .all()
+    )
+    vendors_out = [
+        {"id": v.id, "name": v.name, "type": "vendor"} for v in vendors
+    ]
+
+    return {"bills": bills_out, "products": products_out, "vendors": vendors_out}
 
 @app.get("/ping")
 def ping(db: Session = Depends(get_db)):

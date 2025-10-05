@@ -71,12 +71,51 @@
     <script type="text/babel">
       // ---------------- libs & React hooks
       const R = window.Recharts || {};
-      const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } = R;
+const {
+  ResponsiveContainer,
+  ComposedChart, BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
+  PieChart, Pie, Cell, Sector
+} = R;
+const HAS_R = !!(window.Recharts && window.Recharts.PieChart);
+
       const { useEffect, useMemo, useRef, useState } = React;
 
       // ---------------- small helpers
       const fmtDate = d => { try { return d ? new Date(d).toLocaleDateString() : "—"; } catch { return "—"; } };
       const fmtINR  = v => v==null ? "—" : "₹" + Number(v).toLocaleString("en-IN");
+
+  function useVisibleSize() {
+    const ref = React.useRef(null);
+    const [state, setState] = React.useState({ w: 0, h: 0, visible: true });
+
+    React.useEffect(() => {
+      const el = ref.current;
+      if (!el) return;
+
+      const ro = new ResizeObserver((entries) => {
+        for (const e of entries) {
+          const cr = e.contentRect;
+          setState((s) => ({ ...s, w: cr.width, h: cr.height || s.h }));
+        }
+      });
+      ro.observe(el);
+
+      const io = new IntersectionObserver(
+        ([e]) => setState((s) => ({ ...s, visible: e.isIntersecting })),
+        { threshold: 0.01 }
+      );
+      io.observe(el);
+
+      return () => {
+        ro.disconnect();
+        io.disconnect();
+      };
+    }, []);
+
+    return [ref, state];
+  }
+
       /* ===== HSN→Category config (ONLY these HSNs count) ===== */
 const HSN_GROUPS = {
   "Tiles": ["690721","690722"],
@@ -242,14 +281,38 @@ function buildProductsFromBills(bills) {
   }));
   return Array.from(map.values()).map(p => ({ ...p, reorder_point: REORDER_BY_CATEGORY[p.category] ?? 20 }));
 }
+// ---- Category stock aggregation + simple icons ----
+function aggregateCategoryStock(products = []) {
+  const acc = {};
+  for (const p of products) {
+    const cat = (p.category || "Uncategorized").trim();
+    const qty = Number(p.stock_qty ?? p.qty ?? 0);
+    const rop = Number(p.reorder_point ?? REORDER_BY_CATEGORY[cat] ?? 20);
+    if (!acc[cat]) acc[cat] = { category: cat, stock: 0, reorder: rop };
+    acc[cat].stock += qty;
+    acc[cat].reorder = Math.max(acc[cat].reorder, rop);
+  }
+  return Object.values(acc).sort((a,b)=>a.category.localeCompare(b.category));
+}
+
+function iconForCategory(name="") {
+  const n = name.toLowerCase();
+  if (n.includes("tile")) return "🧱";
+  if (n.includes("sanit")) return "🚿";
+  if (n.includes("faucet") || n.includes("tap")) return "🚰";
+  if (n.includes("plumb")) return "🪠";
+  if (n.includes("elect")) return "🔌";
+  if (n.includes("adhes") || n.includes("glue")) return "🧴";
+  if (n.includes("granite") || n.includes("marble") || n.includes("stone")) return "🪨";
+  return "📦";
+}
 
 
 
 /* simple palette */
 const PAL = (i) => `hsl(${(i*57)%360} 70% 55%)`;
 
-/* Canvas pie renderer — draws into #pieCanvas if present */
-// interactive donut pie (hover = tooltip + highlight)
+
 let __pieSlices = []; // {s,e,category,qty,color}
 function renderPie(data) {
   const cvs = document.getElementById('pieCanvas'); if (!cvs) return;
@@ -266,15 +329,12 @@ function renderPie(data) {
   data.forEach((d,i)=>{
     const a = ((d.qty||0)/total) * Math.PI*2;
     const a1 = a0 + a;
-    // store
     __pieSlices.push({ s:a0, e:a1, category:d.category, qty: d.qty||0, color:`hsl(${(i*68)%360} 85% 60%)` });
 
-    // slice body
     ctx.beginPath();
     ctx.arc(cx,cy,R,a0,a1,false);
     ctx.arc(cx,cy,r,a1,a0,true);
     ctx.closePath();
-    // soft shading
     const g = ctx.createLinearGradient(cx-R,cy-R,cx+R,cy+R);
     g.addColorStop(0, __pieSlices[i].color);
     g.addColorStop(1, 'hsl(220 30% 18%)');
@@ -285,19 +345,12 @@ function renderPie(data) {
     a0 = a1;
   });
 
-  // center label
-  ctx.fillStyle="#cbd5e1"; ctx.font="600 14px system-ui";
-  ctx.textAlign="center"; ctx.fillText("Category Split", cx, cy-6);
-  ctx.font="12px system-ui"; ctx.fillStyle="#94a3b8";
-  ctx.fillText(`${data.length} categories`, cx, cy+12);
-
   // hover interaction
   const onMove = (evt)=>{
     const rect = cvs.getBoundingClientRect();
     const x = evt.clientX - rect.left, y = evt.clientY - rect.top;
     const dx = x - cx, dy = y - cy, rr = Math.hypot(dx,dy);
     if (rr < r || rr > R){ tip.style.display='none'; cvs.style.cursor='default'; redraw(); return; }
-    // angle 0 at -PI/2
     let ang = Math.atan2(dy,dx);
     if (ang < -Math.PI/2) ang += Math.PI*2;
     let hit = -1;
@@ -328,11 +381,6 @@ function renderPie(data) {
       ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=(idx===highlight)? 18 : 8;
       ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1;
     });
-    // center text again
-    ctx.fillStyle="#cbd5e1"; ctx.font="600 14px system-ui";
-    ctx.textAlign="center"; ctx.fillText("Category Split", cx, cy-6);
-    ctx.font="12px system-ui"; ctx.fillStyle="#94a3b8";
-    ctx.fillText(`${data.length} categories`, cx, cy+12);
   }
 
   cvs.onmousemove = onMove;
@@ -450,6 +498,13 @@ function renderWeekly(data) {
         // bills list
         const [loadingBills, setLoadingBills] = useState(true);
         const [bills, setBills] = useState([]);
+        // Build normalized list + chart datasets
+const normalizedBills = useMemo(() => (bills || []).map(b => mapServerBill(b)), [bills]);
+const { pieData: categorySplitData, weeklyData } = useMemo(
+  () => buildCategoryAggregates(normalizedBills),
+  [normalizedBills]
+);
+
         // Recompute dashboard KPIs from the fetched bills
 useEffect(()=>{
   const normalized = (bills || []).map(b => mapServerBill(b));
@@ -497,6 +552,46 @@ const stockProducts = useMemo(
   () => buildProductsFromBills((bills || []).map(b => mapServerBill(b))),
   [bills]
 );
+// Category stock vs reorder chart data
+const catStockData = useMemo(() => aggregateCategoryStock(stockProducts || []), [stockProducts]);
+
+// ---- Low-stock notifications (poll backend every 30s; fallback to client aggregation) ----
+const [notifications, setNotifications] = useState([]);
+async function fetchLowNotifications() {
+  try {
+    const r = await fetch(API + "/stock/low", { cache: "no-store" }).catch(()=>null);
+    if (r && r.ok) {
+      const arr = await r.json();
+      if (Array.isArray(arr) && arr.length) {
+        const mapped = arr.map(x => ({
+          id: x.id || x.product_id || x.hsn || x.name,
+          name: x.name || x.product_name || "(unknown item)",
+          category: x.category || "",
+          stock_qty: Number(x.stock_qty ?? x.qty ?? 0),
+          reorder_point: Number(x.reorder_point ?? (REORDER_BY_CATEGORY[(x.category||"")] ?? 20)),
+        })).filter(n => n.stock_qty < n.reorder_point);
+        setNotifications(mapped);
+        return;
+      }
+    }
+  } catch {}
+  // Fallback: derive from client products built from invoices
+  const fb = (stockProducts || [])
+    .filter(p => (p.stock_qty||0) < (p.reorder_point||20))
+    .map(p => ({
+      id: p.sku || p.hsn || p.name,
+      name: p.name,
+      category: p.category || "",
+      stock_qty: p.stock_qty || 0,
+      reorder_point: p.reorder_point || 20,
+    }));
+  setNotifications(fb);
+}
+useEffect(() => {
+  fetchLowNotifications();
+  const t = setInterval(fetchLowNotifications, 30000);
+  return () => clearInterval(t);
+}, [API, stockProducts]);
 
         // When CDN charts are blocked, draw local canvas charts using parsed bills
 useEffect(()=>{
@@ -531,16 +626,6 @@ useEffect(()=>{
           })();
           return ()=>{cancel=true};
         },[API]);
-
-        // charts
-        const weekly = useMemo(()=>Array.from({length:7}).map((_,i)=>({
-          d:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][i],
-          invoices:[60,72,81,50,95,110,76][i],
-          lines:[420,505,600,390,720,810,560][i],
-        })),[]);
-        const pieCats = useMemo(()=>[
-          {name:"Tiles", value:72},{name:"Pipes", value:54},{name:"WC", value:31},{name:"Fittings", value:62}
-        ],[]);
 
         // OCR inbox
         const [uploading,setUploading]=useState(false);
@@ -627,7 +712,14 @@ useEffect(()=>{
               <Sidebar tab={tab} setTab={setTab} onUploadClick={onUploadClick} />
 
               <main className="flex-1 p-4 md:p-6 xl:p-8">
-                <Topbar role={role} setRole={setRole} />
+                <Topbar
+                role={role}
+                setRole={setRole}
+                API={API}
+                setTab={setTab}
+                onOpenBill={openBillViewer}
+                notifications={notifications}
+              />
 
                 {tab==="dashboard" && (
                   <>
@@ -635,25 +727,20 @@ useEffect(()=>{
                       <KPI title="Invoices Parsed (today)" value={kpi.invoicesToday} delta="+12%" />
                       <KPI title="Line Items Parsed" value={kpi.linesToday} delta="+8%" />
                       <KPI title="Parser Accuracy" value={kpi.accuracy.toFixed(1) + '%'} delta="+0.6%" />
-                      <KPI title="Total Stock Value" value={fmtINR(kpi.stockValue*100000)} delta="+₹1.2L" />
+                      <KPI title="Total Stock Value" value={fmtINR(kpi.stockValue)} delta="+₹1.2L" />
                     </section>
-{(!window.Recharts || !window.Recharts.BarChart || !window.Recharts.PieChart) && (
-  <section className="mt-6 grid gap-6 lg:grid-cols-3">
-    <Card className="lg:col-span-2">
-      <CardHeader title="Weekly Throughput" subtitle="Invoices vs line items" />
-      <div className="h-56 px-2 pb-4 flex items-center">
-        <canvas id="weeklyCanvas" width="640" height="220" className="w-full"></canvas>
-      </div>
-    </Card>
-    <Card>
-      <CardHeader title="Category Split" subtitle="Products by category" />
+<section className="mt-6 grid gap-6 lg:grid-cols-3">
+<Card className="lg:col-span-2">
+  <CardHeader title="Category Stock" subtitle="Stock vs reorder point by category" />
+  <CategoryStockBar data={catStockData} />
+</Card>
 
-      <div className="h-56 px-2 pb-4 flex items-center">
-        <canvas id="pieCanvas" width="520" height="220" className="w-full"></canvas>
-      </div>
-    </Card>
-  </section>
-)}
+  <Card>
+    <CardHeader title="Category Split" subtitle="Products by category" />
+    <CategorySplitDonut data={categorySplitData} />
+  </Card>
+</section>
+
 
                     <Card className="mt-6">
                       <CardHeader title="Recent OCR Documents" subtitle="Latest uploads and statuses" />
@@ -745,11 +832,6 @@ useEffect(()=>{
   </Card>
 )}
 
-
-                <div className="mt-8 text-center text-xs text-slate-600">
-                  API: <span className="font-mono">{API}</span>
-                </div>
-
                 {/* Keeps the previous modal feature available if you want it */}
 
                 <BillViewer
@@ -776,11 +858,16 @@ useEffect(()=>{
         );
         return (
           <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-slate-200 bg-white/70 p-4 backdrop-blur lg:flex">
-            <div className="mb-6 flex items-center gap-2">
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white shadow">W</div>
-              <div><div className="text-lg font-semibold">Waresys</div><div className="text-[11px] text-slate-500">OCR • Inventory • Analytics</div></div>
-            </div>
-            <nav className="space-y-1">
+   <div className="flex items-center gap-3 mb-4">
+  <img src="/static/waresys-logo.png" alt="WARESYS" className="h-12 w-12 rounded-xl object-contain shadow-sm" />
+  <div>
+    <div className="text-xl font-extrabold tracking-wide">WARESYS</div>
+    <div className="text-xs text-slate-500">OCR • Inventory • Analytics</div>
+  </div>
+</div>
+
+<nav className="mt-4 space-y-2">
+
               <Item label="Dashboard" active={tab==='dashboard'} onClick={()=>setTab('dashboard')} />
               <Item label="OCR Inbox" active={tab==='ocr'} onClick={()=>setTab('ocr')} />
               <Item label="Categories"  active={tab==='products'} onClick={()=>setTab('products')} />
@@ -792,37 +879,150 @@ useEffect(()=>{
                 className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-2.5 text-sm font-semibold text-white shadow hover:opacity-95">
                 Upload
               </button>
-              <div className="rounded-xl border border-slate-200 bg-white p-3 text-[11px] text-slate-500">
-                Tip: set <span className="font-mono">localStorage.WARESYS_API</span> to point the UI at your backend.
-              </div>
             </div>
           </aside>
         );
       }
 
-      function Topbar({ role, setRole }){
-        return (
-          <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <input
-                  placeholder="Search bills, vendors, products…"
-                  className="w-[300px] rounded-xl border border-slate-200 bg-white pl-3 pr-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-violet-300" />
+      function Topbar({ role, setRole, API, setTab, onOpenBill, notifications }){
+  // ---- Search ----
+  const [q, setQ] = useState("");
+  const [openSearch, setOpenSearch] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [results, setResults] = useState({ bills:[], products:[], vendors:[] });
+
+  useEffect(()=>{
+    if (!q || !q.trim()) { setResults({bills:[],products:[],vendors:[]}); setOpenSearch(false); return; }
+    const t = setTimeout(async ()=>{
+      setSearching(true);
+      try{
+        const r = await fetch(API + "/search?q=" + encodeURIComponent(q.trim()));
+        if (r.ok) {
+          const data = await r.json();
+          setResults({
+            bills: Array.isArray(data.bills)? data.bills : [],
+            products: Array.isArray(data.products)? data.products : [],
+            vendors: Array.isArray(data.vendors)? data.vendors : [],
+          });
+          setOpenSearch(true);
+        }
+      } finally { setSearching(false); }
+    }, 300);
+    return ()=>clearTimeout(t);
+  }, [q, API]);
+
+  function selectResult(item){
+    setOpenSearch(false);
+    setQ("");
+    if (item.type === "bill" && item.id) {
+      onOpenBill?.(item.id);
+    } else if (item.type === "product") {
+      setTab?.("stock");
+    } else if (item.type === "vendor") {
+      setTab?.("dashboard");
+    }
+  }
+
+  // ---- Notifications (low stock) ----
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifCount = notifications?.length || 0;
+
+  return (
+    <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between relative">
+      <div className="flex items-center gap-3">
+        <div className="relative">
+          <input
+            value={q}
+            onChange={(e)=>setQ(e.target.value)}
+            placeholder="Search bills, vendors, products…"
+            className="w-[300px] rounded-xl border border-slate-200 bg-white pl-3 pr-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-violet-300" />
+          {openSearch && (
+            <div className="absolute z-40 mt-1 w-[360px] rounded-xl border border-slate-200 bg-white shadow">
+              <div className="max-h-80 overflow-auto text-sm">
+                {(!results.bills.length && !results.products.length && !results.vendors.length) && (
+                  <div className="px-3 py-2 text-slate-500">No results</div>
+                )}
+                {results.bills.length>0 && (
+                  <>
+                    <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-slate-400">Bills</div>
+                    {results.bills.map(b=>(
+                      <button key={"b"+b.id} onClick={()=>selectResult(b)}
+                        className="flex w-full items-center justify-between px-3 py-2 hover:bg-slate-50">
+                        <span className="truncate"><span className="font-medium">{b.bill_no}</span> · {b.party_name || "—"}</span>
+                        <span className="text-xs text-slate-500">{b.bill_date || ""}</span>
+                      </button>
+                    ))}
+                    <div className="border-t"></div>
+                  </>
+                )}
+                {results.products.length>0 && (
+                  <>
+                    <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-slate-400">Products</div>
+                    {results.products.map(p=>(
+                      <button key={"p"+p.id} onClick={()=>selectResult(p)}
+                        className="flex w-full items-center justify-between px-3 py-2 hover:bg-slate-50">
+                        <span className="truncate"><span className="font-medium">{p.name || "—"}</span> · {p.category || ""}</span>
+                        <span className="text-xs text-slate-500">{p.hsn || ""}</span>
+                      </button>
+                    ))}
+                    <div className="border-t"></div>
+                  </>
+                )}
+                {results.vendors.length>0 && (
+                  <>
+                    <div className="px-3 py-1 text-[11px] uppercase tracking-wide text-slate-400">Vendors</div>
+                    {results.vendors.map(v=>(
+                      <button key={"v"+v.id} onClick={()=>selectResult(v)}
+                        className="flex w-full items-center justify-between px-3 py-2 hover:bg-slate-50">
+                        <span className="truncate font-medium">{v.name}</span>
+                        <span className="text-xs text-slate-500">Vendor</span>
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
-              <span className="hidden rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-500 sm:inline-block">
-                {new Date().toLocaleString()}
-              </span>
             </div>
-            <div className="flex items-center gap-3">
-              <button className="relative grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white">
-                🔔
-                <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-fuchsia-500 text-[10px] font-bold text-white">3</span>
-              </button>
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-slate-200 to-slate-100 text-xs font-bold text-slate-700">BV</div>
+          )}
+        </div>
+        <span className="hidden rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-500 sm:inline-block">
+          {new Date().toLocaleString()}
+        </span>
+      </div>
+      <div className="flex items-center gap-3 relative">
+        <button onClick={()=>setNotifOpen(o=>!o)} className="relative grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white">
+          🔔
+          {notifCount>0 && (
+            <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-fuchsia-500 text-[10px] font-bold text-white">{notifCount}</span>
+          )}
+        </button>
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-slate-200 to-slate-100 text-xs font-bold text-slate-700">BV</div>
+
+        {notifOpen && (
+          <div className="absolute right-0 top-10 z-40 w-[360px] rounded-xl border border-slate-200 bg-white shadow">
+            <div className="px-3 py-2 border-b text-sm font-semibold">Notifications</div>
+            <div className="max-h-80 overflow-auto text-sm">
+              {notifCount===0 && <div className="px-3 py-3 text-slate-500">All good — no low stock.</div>}
+              {notifications.map((n,i)=>(
+                <div key={i} className="flex items-center justify-between px-3 py-2 hover:bg-slate-50">
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{n.name}</div>
+                    <div className="text-xs text-slate-500 truncate">{n.category || "Uncategorized"}</div>
+                  </div>
+                  <div className="text-xs">
+                    <span className="rounded bg-red-50 px-2 py-0.5 text-red-600 border border-red-200">
+                      {n.stock_qty} / {n.reorder_point}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </header>
-        );
-      }
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
 
       function KPI({title,value,delta}){
         return (
@@ -1032,6 +1232,195 @@ useEffect(()=>{
           </div>
         );
       }
+// ---- Polished, stable charts ----
+const COLORS = ["#7C3AED", "#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4", "#84CC16"];
+
+function renderActiveShape3D(props) {
+  const RAD = Math.PI / 180;
+  const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, midAngle, fill } = props;
+  const off = 8, mx = Math.cos(-midAngle * RAD) * off, my = Math.sin(-midAngle * RAD) * off;
+  return (
+    <g transform={`translate(${mx},${my})`} filter="url(#ds1)">
+      <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 8}
+              startAngle={startAngle} endAngle={endAngle} fill={fill}/>
+      <Sector cx={cx} cy={cy} innerRadius={outerRadius + 6} outerRadius={outerRadius + 8}
+              startAngle={startAngle} endAngle={endAngle} fill="rgba(255,255,255,0.25)"/>
+    </g>
+  );
+}
+
+function CategorySplitDonut({ data }) {
+  const [wrapRef, sz] = useVisibleSize();
+  const ready = sz.w > 0 && sz.visible;
+  const [active, setActive] = React.useState(null);
+  const series = (data || []).map(d => ({ name: d.name || d.category, value: Number(d.value ?? d.qty) || 0 }));
+
+  // Canvas fallback if Recharts unavailable
+  React.useEffect(()=>{
+    if (HAS_R) return;
+    const raw = series.map(s => ({ category: s.name, qty: s.value }));
+    const t = setTimeout(()=> { renderPie(raw); }, 0);
+    return () => clearTimeout(t);
+  }, [series]);
+
+  if (!HAS_R) {
+    return (
+      <div ref={wrapRef} className="relative" style={{ height: 320 }}>
+        <canvas id="pieCanvas" width="640" height="280" className="w-full"></canvas>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={wrapRef} className="relative" style={{ height: 320 }}>
+      {ready && (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <defs>
+              <filter id="ds1" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="6" stdDeviation="4" floodColor="#000" floodOpacity="0.25" />
+              </filter>
+            </defs>
+            <Pie
+              data={series}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={80}
+              outerRadius={110}
+              paddingAngle={2}
+              stroke="#fff"
+              strokeWidth={2}
+              isAnimationActive
+              label={false}
+              labelLine={false}
+              activeIndex={active}
+              onMouseEnter={(_, i) => setActive(i)}
+              onMouseLeave={() => setActive(null)}
+              activeShape={renderActiveShape3D}
+            >
+              {series.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+            </Pie>
+            <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e5e7eb" }} />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
+
+function StableLine({ data }) {
+  const [ref, sz] = useVisibleSize();
+  const ready = sz.w > 0 && sz.visible;
+
+  // normalize for either backend or legacy shape
+  const series = (data || []).map(d => ({
+    week: d.week || d.d || "",
+    invoices: Number(d.invoices ?? d.qty ?? 0),
+    lines: Number(d.lines ?? 0)
+  }));
+
+  // ---- Fallback to canvas if Recharts is missing ----
+  React.useEffect(()=>{
+    if (HAS_R) return;
+    const raw = series.map(s => ({ week: s.week, qty: s.invoices }));
+    const t = setTimeout(()=> { renderWeekly(raw); }, 0);
+    return () => clearTimeout(t);
+  }, [series]);
+
+  if (!HAS_R) {
+    return (
+      <div ref={ref} style={{ height: 280 }}>
+        <canvas id="weeklyCanvas" width="640" height="280" className="w-full"></canvas>
+      </div>
+    );
+  }
+
+  // ---- Normal Recharts line chart ----
+  return (
+    <div ref={ref} style={{ height: 280 }}>
+      {ready && (
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={series}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="week" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey="invoices" stroke="#7C3AED" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="lines" stroke="#10B981" strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
+function CategoryStockBar({ data=[] }) {
+  const [ref, sz] = useVisibleSize();
+  const ready = sz.w > 0 && sz.visible;
+
+  if (HAS_R) {
+    const gid = "gradStock" + Math.random().toString(36).slice(2,7);
+    return (
+      <div ref={ref} style={{ height: 320 }}>
+        {ready && (
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data}>
+              <defs>
+                <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.85"/>
+                  <stop offset="100%" stopColor="#C4B5FD" stopOpacity="0.4"/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="category" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="stock" name="Stock" fill={`url(#${gid})`} radius={[8,8,0,0]} />
+              <Line dataKey="reorder" name="Reorder" stroke="#EF4444" strokeWidth={2} dot={{ r: 2 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    );
+  }
+
+  // Canvas fallback (CDN blocked)
+  React.useEffect(()=>{
+    if (!ref.current) return;
+    const el = document.getElementById("catbarCanvas");
+    if (!el) return;
+    const ctx = el.getContext("2d");
+    const w = el.width = el.clientWidth, h = el.height = 280;
+    ctx.clearRect(0,0,w,h);
+    const pad = 40, cols = data.length || 1;
+    const maxY = Math.max(10, ...data.map(d=>Math.max(d.stock, d.reorder)));
+    const band = (w - pad*2) / cols, barW = band * 0.6;
+
+    ctx.strokeStyle = "#cbd5e1"; ctx.beginPath();
+    ctx.moveTo(pad, 10); ctx.lineTo(pad, h-pad); ctx.lineTo(w-10, h-pad); ctx.stroke();
+
+    data.forEach((d, i)=>{
+      const x = pad + i*band + (band-barW)/2;
+      const yStock = h-pad - (d.stock/maxY)*(h-pad*2);
+      const yRe = h-pad - (d.reorder/maxY)*(h-pad*2);
+      const grd = ctx.createLinearGradient(0, yStock, 0, h-pad);
+      grd.addColorStop(0, "#7C3AED"); grd.addColorStop(1, "#C4B5FD");
+      ctx.fillStyle = grd; ctx.fillRect(x, yStock, barW, h-pad - yStock);
+      ctx.strokeStyle = "#ef4444"; ctx.beginPath(); ctx.moveTo(x-6, yRe); ctx.lineTo(x+barW+6, yRe); ctx.stroke();
+      ctx.fillStyle="#475569"; ctx.font="12px system-ui";
+      ctx.fillText((d.category||"").slice(0,12), x-4, h-pad+14);
+    });
+  }, [data]);
+
+  return (
+    <div ref={ref} style={{ height: 320 }}>
+      <canvas id="catbarCanvas" className="w-full" height="280"></canvas>
+    </div>
+  );
+}
 
       function CategoryHSN({bills,loading}){
   // Build one row per category using HSN_GROUPS and counts from your invoices
@@ -1060,7 +1449,13 @@ useEffect(()=>{
           {loading && <tr><td colSpan="3" className="px-4 py-10 text-center text-slate-500">Loading…</td></tr>}
           {!loading && rows.map((row,i)=>(
             <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
-              <td className="px-4 py-3 font-medium text-slate-800">{row.category}</td>
+              <td className="px-4 py-3 font-medium text-slate-800">
+  <span className="inline-flex items-center gap-2">
+    <span className="text-lg leading-none">{iconForCategory(row.category)}</span>
+    <span>{row.category}</span>
+  </span>
+</td>
+
               <td className="px-4 py-3">{row.hsn || "—"}</td>
               <td className="px-4 py-3">{row.count}</td>
             </tr>
