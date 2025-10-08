@@ -334,7 +334,7 @@ function renderPie(data) {
   const BASE = -Math.PI / 2;                   // 12 o'clock as 0°
   const cx = cssW / 2;
   const cy = cssH / 2;
-  const R  = Math.min(cssW, cssH) * 0.42;      // outer radius
+  const R  = Math.min(cssW, cssH) * 0.48;      // outer radius (bigger)      // outer radius
   const r  = R * 0.62;                          // inner radius
 
   // --- build slices with angles relative to BASE ---
@@ -1295,8 +1295,8 @@ function CategorySplitDonut({ data }) {
 
   if (!HAS_R) {
     return (
-      <div ref={wrapRef} className="relative" style={{ height: 320 }}>
-        <canvas id="pieCanvas" width="640" height="280" className="w-full"></canvas>
+      <div ref={wrapRef} className="relative" style={{ height: 380 }}>
+        <canvas id="pieCanvas" width="640" height="360" className="w-full"></canvas>
       </div>
     );
   }
@@ -1319,8 +1319,8 @@ function CategorySplitDonut({ data }) {
               cy="50%"
               startAngle={90}      // 12 o'clock
               endAngle={-270}      // clockwise
-              innerRadius={80}
-              outerRadius={110}
+              innerRadius={Math.floor(Math.max(120, Math.min(Math.floor(Math.min(sz.w, sz.h || 380) * 0.42), 200)) * 0.62)}
+              outerRadius={Math.max(120, Math.min(Math.floor(Math.min(sz.w, sz.h || 380) * 0.42), 200))}
               paddingAngle={2}
               stroke="#fff"
               strokeWidth={2}
@@ -1390,30 +1390,129 @@ function StableLine({ data }) {
   );
 }
 
-function CategoryStockBar({ data=[] }) {
+// ---- Pretty category labels + ticks for bar chart ----
+const nf0 = (n) => new Intl.NumberFormat().format(Math.round(Number(n || 0)));
+
+function fixCategoryLabel(raw = "") {
+  let s = String(raw || "").trim();
+  // clean stray comma fragments and dangling ampersands, fix common OCR typos
+  s = s.replace(/,\s*[A-Za-z]?\s*$/, "");
+  s = s.replace(/\s*&\s*$/, "");
+  s = s.replace(/\bFixtur\b/i, "Fixture");
+  s = s.replace(/\s{2,}/g, " ").trim();
+  return s || "Uncategorized";
+}
+
+// 2-line tick for long categories
+function TickTwoLine({ x, y, payload }) {
+  const label = fixCategoryLabel(payload?.value);
+  const max = 12; // wrap point
+  const parts =
+    label.length <= max ? [label] :
+    [label.slice(0, max).trim(), label.slice(max).trim()];
+  return (
+    <text x={x} y={y + 12} textAnchor="middle" fill="#6b7280" fontSize={12}>
+      <tspan x={x} dy="0">{parts[0]}</tspan>
+      {parts[1] ? <tspan x={x} dy="14">{parts[1]}</tspan> : null}
+    </text>
+  );
+}
+
+// small horizontal red tick at the reorder level for each bar
+const ReorderMarker = (props) => {
+  const { x, y, width } = props;
+  if (!isFinite(x) || !isFinite(y) || !isFinite(width)) return null;
+  const pad = width * 0.2;
+  return (
+    <g>
+      <line
+        x1={x + pad}
+        x2={x + width - pad}
+        y1={y}
+        y2={y}
+        stroke="#ef4444"
+        strokeWidth={3}
+        strokeLinecap="round"
+        opacity={0.9}
+      />
+    </g>
+  );
+};
+
+// tooltip for the bar chart
+const CatBarTip = ({ active, payload, label }) => {
+  if (!active || !payload || !payload.length) return null;
+  const d = payload[0].payload;
+  const stock = Number(d.stock || 0);
+  const reorder = Number(d.reorder || 0);
+  const delta = stock - reorder;
+  const status = delta >= 0 ? "Above" : "Below";
+  return (
+    <div style={{
+      background: "#111827", color: "#fff", padding: "8px 10px",
+      fontSize: 12, borderRadius: 8, boxShadow: "0 6px 22px rgba(0,0,0,.25)"
+    }}>
+      <div style={{ fontWeight: 600, marginBottom: 6 }}>{fixCategoryLabel(label)}</div>
+      <div>Stock: <b>{nf0(stock)}</b></div>
+      <div>Reorder: <b>{nf0(reorder)}</b></div>
+      <div>Δ vs Reorder: <b>{nf0(delta)}</b> ({status})</div>
+    </div>
+  );
+};
+
+function CategoryStockBar({ data = [] }) {
   const [ref, sz] = useVisibleSize();
   const ready = sz.w > 0 && sz.visible;
 
+  // ==== Recharts path ======================================================
   if (HAS_R) {
-    const gid = "gradStock" + Math.random().toString(36).slice(2,7);
+    const gid = "gradStock" + Math.random().toString(36).slice(2, 7);
+    const [activeIdx, setActiveIdx] = React.useState(null);
+
+    // normalized + pretty labels for display only
+    const rows = (data || []).map(d => ({
+      ...d,
+      category: fixCategoryLabel(d.category),
+    }));
+
     return (
       <div ref={ref} style={{ height: 320 }}>
         {ready && (
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data}>
+            <ComposedChart data={rows} onMouseLeave={() => setActiveIdx(null)}>
               <defs>
                 <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.85"/>
-                  <stop offset="100%" stopColor="#C4B5FD" stopOpacity="0.4"/>
+                  <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.9" />
+                  <stop offset="100%" stopColor="#7C3AED" stopOpacity="0.25" />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="category" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="stock" name="Stock" fill={`url(#${gid})`} radius={[8,8,0,0]} />
-              <Line dataKey="reorder" name="Reorder" stroke="#EF4444" strokeWidth={2} dot={{ r: 2 }} />
+
+              <CartesianGrid stroke="#e5e7eb" vertical={false} />
+              <XAxis dataKey="category" tick={<TickTwoLine />} height={42} tickMargin={6} interval={0} />
+              <YAxis tick={{ fill: "#6b7280", fontSize: 12 }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip content={<CatBarTip />} cursor={{ fill: "rgba(124,58,237,0.08)" }} />
+              {/* prettier legend names */}
+              {/* Bars with hover highlight */}
+              <Bar
+                dataKey="stock"
+                name="Stock"
+                fill={`url(#${gid})`}
+                radius={[16, 16, 0, 0]}
+                barSize={42}
+                onMouseEnter={(_, i) => setActiveIdx(i)}
+              >
+                {rows.map((_, i) => (
+                  <Cell
+                    key={i}
+                    stroke={i === activeIdx ? "rgba(124,58,237,.95)" : "transparent"}
+                    strokeWidth={i === activeIdx ? 2 : 0}
+                    fillOpacity={activeIdx == null ? 1 : (i === activeIdx ? 1 : 0.6)}
+                  />
+                ))}
+              </Bar>
+
+              {/* Per-bar red reorder tick (not a full line across) */}
+              <Bar dataKey="reorder" isAnimationActive={false} shape={<ReorderMarker />} />
             </ComposedChart>
           </ResponsiveContainer>
         )}
@@ -1421,32 +1520,168 @@ function CategoryStockBar({ data=[] }) {
     );
   }
 
-  // Canvas fallback (CDN blocked)
-  React.useEffect(()=>{
-    if (!ref.current) return;
+  // ==== Canvas fallback (when Recharts CDN is blocked) =====================
+  React.useEffect(() => {
     const el = document.getElementById("catbarCanvas");
     if (!el) return;
+
+    const tip = document.getElementById("chartTip");
     const ctx = el.getContext("2d");
-    const w = el.width = el.clientWidth, h = el.height = 280;
-    ctx.clearRect(0,0,w,h);
-    const pad = 40, cols = data.length || 1;
-    const maxY = Math.max(10, ...data.map(d=>Math.max(d.stock, d.reorder)));
-    const band = (w - pad*2) / cols, barW = band * 0.6;
 
-    ctx.strokeStyle = "#cbd5e1"; ctx.beginPath();
-    ctx.moveTo(pad, 10); ctx.lineTo(pad, h-pad); ctx.lineTo(w-10, h-pad); ctx.stroke();
+    // size to CSS box + DPR
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const rect = el.getBoundingClientRect();
+    const W = el.width = Math.round(rect.width * dpr);
+    const H = el.height = Math.round(280 * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, rect.width, 280);
 
-    data.forEach((d, i)=>{
-      const x = pad + i*band + (band-barW)/2;
-      const yStock = h-pad - (d.stock/maxY)*(h-pad*2);
-      const yRe = h-pad - (d.reorder/maxY)*(h-pad*2);
-      const grd = ctx.createLinearGradient(0, yStock, 0, h-pad);
-      grd.addColorStop(0, "#7C3AED"); grd.addColorStop(1, "#C4B5FD");
-      ctx.fillStyle = grd; ctx.fillRect(x, yStock, barW, h-pad - yStock);
-      ctx.strokeStyle = "#ef4444"; ctx.beginPath(); ctx.moveTo(x-6, yRe); ctx.lineTo(x+barW+6, yRe); ctx.stroke();
-      ctx.fillStyle="#475569"; ctx.font="12px system-ui";
-      ctx.fillText((d.category||"").slice(0,12), x-4, h-pad+14);
+    // normalize data & axis
+    const rows = (data || []).map(d => ({
+      category: fixCategoryLabel(d.category),
+      stock: Number(d.stock || 0),
+      reorder: Number(d.reorder || 0),
+    }));
+    const padL = 48, padR = 12, padT = 16, padB = 40;
+    const maxY = Math.max(10, ...rows.map(r => Math.max(r.stock, r.reorder)));
+    const band = (rect.width - padL - padR) / Math.max(1, rows.length);
+    const barW = Math.max(18, band * 0.6);
+
+    // axes
+    ctx.strokeStyle = "#cbd5e1";
+    ctx.beginPath();
+    ctx.moveTo(padL, padT);
+    ctx.lineTo(padL, 280 - padB);
+    ctx.lineTo(rect.width - padR, 280 - padB);
+    ctx.stroke();
+
+    // helpers
+    const yOf = (v) => 280 - padB - ((280 - padB - padT) * (v / maxY));
+    const bars = [];
+
+    // draw bars + red reorder tick
+    rows.forEach((r, i) => {
+      const x = padL + i * band + (band - barW) / 2;
+      const yS = yOf(r.stock), yR = yOf(r.reorder);
+      const grad = ctx.createLinearGradient(0, yS, 0, 280 - padB);
+      grad.addColorStop(0, "#7C3AED");
+      grad.addColorStop(1, "#C4B5FD");
+      ctx.fillStyle = grad;
+(function () {
+  const r = Math.min(12, barW / 2);
+  const yB = 280 - padB, yT = yS, xL = x, xR = x + barW;
+  ctx.beginPath();
+  ctx.moveTo(xL, yB);
+  ctx.lineTo(xL, yT + r);
+  ctx.quadraticCurveTo(xL, yT, xL + r, yT);
+  ctx.lineTo(xR - r, yT);
+  ctx.quadraticCurveTo(xR, yT, xR, yT + r);
+  ctx.lineTo(xR, yB);
+  ctx.closePath();
+  ctx.fill();
+})();
+
+
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x + barW * 0.2, yR);
+      ctx.lineTo(x + barW * 0.8, yR);
+      ctx.stroke();
+
+      bars.push({ x, w: barW, yS, yR, row: r });
     });
+
+    // x labels (wrap to 2 lines)
+    ctx.fillStyle = "#475569";
+    ctx.font = "12px system-ui";
+    rows.forEach((r, i) => {
+      const x = padL + i * band + (band - barW) / 2 + barW / 2;
+      const label = fixCategoryLabel(r.category);
+      const max = 12;
+      const line1 = label.slice(0, max).trim();
+      const line2 = label.length > max ? label.slice(max).trim() : "";
+      ctx.textAlign = "center";
+      ctx.fillText(line1, x, 280 - padB + 14);
+      if (line2) ctx.fillText(line2, x, 280 - padB + 28);
+    });
+
+    // hover interactions
+    el.onmousemove = (evt) => {
+      const r2 = el.getBoundingClientRect();
+      const mx = evt.clientX - r2.left;
+      const my = evt.clientY - r2.top;
+
+      // find hit bar
+      let hit = null;
+      for (const b of bars) {
+        if (mx >= b.x && mx <= b.x + b.w && my >= b.yS && my <= 280 - padB) { hit = b; break; }
+      }
+
+      // redraw base (simple highlight outline when hovering)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, rect.width, 280);
+      // (rebuild quickly)
+      rows.forEach((r, i) => {
+        const x = padL + i * band + (band - barW) / 2;
+        const yS = yOf(r.stock), yR = yOf(r.reorder);
+        const grad = ctx.createLinearGradient(0, yS, 0, 280 - padB);
+        grad.addColorStop(0, "#7C3AED");
+        grad.addColorStop(1, "#C4B5FD");
+        ctx.fillStyle = grad;
+ctx.globalAlpha = hit && fixCategoryLabel(r.category) !== hit.row.category ? 0.65 : 1;
+(function () {
+  const rTop = Math.min(12, barW / 2);
+  const yB = 280 - padB, yT = yS, xL = x, xR = x + barW;
+  ctx.beginPath();
+  ctx.moveTo(xL, yB);
+  ctx.lineTo(xL, yT + rTop);
+  ctx.quadraticCurveTo(xL, yT, xL + rTop, yT);
+  ctx.lineTo(xR - rTop, yT);
+  ctx.quadraticCurveTo(xR, yT, xR, yT + rTop);
+  ctx.lineTo(xR, yB);
+  ctx.closePath();
+  ctx.fill();
+})();
+ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + barW * 0.2, yR);
+        ctx.lineTo(x + barW * 0.8, yR);
+        ctx.stroke();
+      });
+      // axes again
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.beginPath();
+      ctx.moveTo(padL, padT);
+      ctx.lineTo(padL, 280 - padB);
+      ctx.lineTo(rect.width - padR, 280 - padB);
+      ctx.stroke();
+
+      // labels again
+      ctx.fillStyle = "#475569";
+      ctx.font = "12px system-ui";
+      rows.forEach((r, i) => {
+        const x = padL + i * band + (band - barW) / 2 + barW / 2;
+        const label = fixCategoryLabel(r.category);
+        const max = 12;
+        const line1 = label.slice(0, max).trim();
+        const line2 = label.length > max ? label.slice(max).trim() : "";
+        ctx.textAlign = "center";
+        ctx.fillText(line1, x, 280 - padB + 14);
+        if (line2) ctx.fillText(line2, x, 280 - padB + 28);
+      });
+
+      if (!hit) { tip.style.display = "none"; el.style.cursor = "default"; return; }
+      tip.textContent = `${hit.row.category} — ${nf0(hit.row.stock)} (ROP ${nf0(hit.row.reorder)})`;
+      tip.style.left = `${evt.clientX}px`;
+      tip.style.top = `${evt.clientY}px`;
+      tip.style.display = "block";
+      el.style.cursor = "pointer";
+    };
+    el.onmouseleave = () => { tip.style.display = "none"; el.style.cursor = "default"; };
   }, [data]);
 
   return (
@@ -1455,6 +1690,8 @@ function CategoryStockBar({ data=[] }) {
     </div>
   );
 }
+
+
 
       function CategoryHSN({bills,loading}){
   // Build one row per category using HSN_GROUPS and counts from your invoices
