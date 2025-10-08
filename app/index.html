@@ -313,79 +313,109 @@ function iconForCategory(name="") {
 const PAL = (i) => `hsl(${(i*57)%360} 70% 55%)`;
 
 
-let __pieSlices = []; // {s,e,category,qty,color}
+let __pieSlices = []; // [{s,e,category,qty,color}]
 function renderPie(data) {
   const cvs = document.getElementById('pieCanvas'); if (!cvs) return;
   const tip = document.getElementById('chartTip');
-  const ctx = cvs.getContext('2d'), W=cvs.width, H=cvs.height;
-  const cx=W*0.48, cy=H*0.58, R=Math.min(W,H)*0.40, r=R*0.62; // outer & inner radius
-  ctx.clearRect(0,0,W,H);
 
-  const total = data.reduce((s,d)=>s+(d.qty||0),0) || 1;
-  let a0 = -Math.PI/2;
+  const ctx = cvs.getContext('2d');
+
+  // --- set canvas to its *displayed* size (handles DPR + responsive width) ---
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const rect = cvs.getBoundingClientRect();
+  const cssW = Math.max(10, rect.width);
+  const cssH = Math.max(10, rect.height);
+  cvs.width  = Math.round(cssW * dpr);
+  cvs.height = Math.round(cssH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);      // draw in CSS pixels
+  ctx.clearRect(0, 0, cssW, cssH);
+
+  // --- donut geometry ---
+  const BASE = -Math.PI / 2;                   // 12 o'clock as 0°
+  const cx = cssW / 2;
+  const cy = cssH / 2;
+  const R  = Math.min(cssW, cssH) * 0.42;      // outer radius
+  const r  = R * 0.62;                          // inner radius
+
+  // --- build slices with angles relative to BASE ---
+  const total = Math.max(1, data.reduce((s, d) => s + (Number(d.qty) || 0), 0));
   __pieSlices = [];
-
-  // draw slices
-  data.forEach((d,i)=>{
-    const a = ((d.qty||0)/total) * Math.PI*2;
-    const a1 = a0 + a;
-    __pieSlices.push({ s:a0, e:a1, category:d.category, qty: d.qty||0, color:`hsl(${(i*68)%360} 85% 60%)` });
-
-    ctx.beginPath();
-    ctx.arc(cx,cy,R,a0,a1,false);
-    ctx.arc(cx,cy,r,a1,a0,true);
-    ctx.closePath();
-    const g = ctx.createLinearGradient(cx-R,cy-R,cx+R,cy+R);
-    g.addColorStop(0, __pieSlices[i].color);
-    g.addColorStop(1, 'hsl(220 30% 18%)');
-    ctx.fillStyle = g;
-    ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=12;
-    ctx.fill(); ctx.shadowBlur=0;
-
+  let a0 = BASE;
+  data.forEach((d, i) => {
+    const val = Number(d.qty) || 0;
+    const a   = (val / total) * Math.PI * 2;
+    const a1  = a0 + a;
+    const color = `hsl(${(i * 70) % 360} 85% 60%)`;
+    __pieSlices.push({ s: a0, e: a1, category: d.category, qty: val, color });
     a0 = a1;
   });
 
-  // hover interaction
-  const onMove = (evt)=>{
-    const rect = cvs.getBoundingClientRect();
-    const x = evt.clientX - rect.left, y = evt.clientY - rect.top;
-    const dx = x - cx, dy = y - cy, rr = Math.hypot(dx,dy);
-    if (rr < r || rr > R){ tip.style.display='none'; cvs.style.cursor='default'; redraw(); return; }
-    let ang = Math.atan2(dy,dx);
-    if (ang < -Math.PI/2) ang += Math.PI*2;
+  // --- draw all slices once ---
+  draw(); // initial render
+
+  // --- hover interaction (correctly mapped to CSS pixels) ---
+  cvs.onmousemove = (evt) => {
+    const r2 = cvs.getBoundingClientRect();                 // fresh rect in case of resize
+    const x = evt.clientX - r2.left;
+    const y = evt.clientY - r2.top;
+    const dx = x - cx, dy = y - cy;
+    const rr = Math.hypot(dx, dy);
+
+    // outside the ring
+    if (rr < r || rr > R) { tip.style.display = 'none'; cvs.style.cursor = 'default'; draw(-1); return; }
+
+    // angle from BASE (12 o'clock), in [BASE, BASE+2π)
+    let ang = Math.atan2(dy, dx);                // (-π, π]
+    while (ang < BASE) ang += Math.PI * 2;       // shift up to BASE
+    // find hit slice
     let hit = -1;
-    __pieSlices.forEach((sl,idx)=>{ if (ang>=sl.s && ang<=sl.e) hit=idx; });
+    for (let i = 0; i < __pieSlices.length; i++) {
+      const sl = __pieSlices[i];
+      if (ang >= sl.s && ang <= sl.e) { hit = i; break; }
+    }
+    if (hit === -1) { tip.style.display = 'none'; cvs.style.cursor = 'default'; draw(-1); return; }
 
-    if (hit===-1){ tip.style.display='none'; cvs.style.cursor='default'; redraw(); return; }
-    cvs.style.cursor='pointer';
     const s = __pieSlices[hit];
-    tip.textContent = `${s.category} – ${Math.round(s.qty)}`;
+    tip.textContent = `${s.category} — ${Math.round(s.qty)}`;
     tip.style.left = `${evt.clientX}px`;
-    tip.style.top = `${evt.clientY}px`;
+    tip.style.top  = `${evt.clientY}px`;
     tip.style.display = 'block';
-    redraw(hit);
+    cvs.style.cursor = 'pointer';
+    draw(hit);
   };
+  cvs.onmouseleave = () => { tip.style.display = 'none'; cvs.style.cursor = 'default'; draw(-1); };
 
-  const onLeave = ()=>{ tip.style.display='none'; cvs.style.cursor='default'; redraw(); };
+  // --- redraw with optional highlighted slice (floats out by a few px) ---
+  function draw(highlight = -1) {
+    ctx.clearRect(0, 0, cssW, cssH);
+    __pieSlices.forEach((sl, idx) => {
+      const bump = (idx === highlight) ? 8 : 0;
+      const mid  = (sl.s + sl.e) / 2;
+      const mx   = Math.cos(mid) * bump, my = Math.sin(mid) * bump;
 
-  function redraw(highlight=-1){
-    ctx.clearRect(0,0,W,H);
-    __pieSlices.forEach((sl,idx)=>{
-      const bump = (idx===highlight) ? 6 : 0;
-      const mx = Math.cos((sl.s+sl.e)/2)*bump, my = Math.sin((sl.s+sl.e)/2)*bump;
       ctx.beginPath();
-      ctx.arc(cx+mx,cy+my,R,sl.s,sl.e,false);
-      ctx.arc(cx+mx,cy+my,r,sl.e,sl.s,true);
+      ctx.arc(cx + mx, cy + my, R, sl.s, sl.e, false);
+      ctx.arc(cx + mx, cy + my, r, sl.e, sl.s, true);
       ctx.closePath();
-      ctx.fillStyle = sl.color; ctx.globalAlpha = (idx===highlight)? 1 : 0.92;
-      ctx.shadowColor='rgba(0,0,0,.25)'; ctx.shadowBlur=(idx===highlight)? 18 : 8;
-      ctx.fill(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+
+      // fill & subtle depth shadow
+      ctx.fillStyle = sl.color;
+      ctx.globalAlpha = (idx === highlight) ? 1 : 0.92;
+      ctx.shadowColor = 'rgba(0,0,0,.25)';
+      ctx.shadowBlur  = (idx === highlight) ? 16 : 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
     });
   }
 
-  cvs.onmousemove = onMove;
-  cvs.onmouseleave = onLeave;
+  // re-render on element resize (keeps hover zones aligned)
+  if (!cvs.__ro) {
+    cvs.__ro = new ResizeObserver(() => renderPie(data));
+    cvs.__ro.observe(cvs);
+  }
 }
+
 
 
 /* Canvas weekly line renderer — draws into #weeklyCanvas if present */
@@ -1285,6 +1315,10 @@ function CategorySplitDonut({ data }) {
               data={series}
               dataKey="value"
               nameKey="name"
+              cx="50%"
+              cy="50%"
+              startAngle={90}      // 12 o'clock
+              endAngle={-270}      // clockwise
               innerRadius={80}
               outerRadius={110}
               paddingAngle={2}
