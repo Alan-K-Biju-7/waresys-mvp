@@ -296,16 +296,23 @@ function aggregateCategoryStock(products = []) {
 }
 
 function iconForCategory(name="") {
-  const n = name.toLowerCase();
-  if (n.includes("tile")) return "🧱";
-  if (n.includes("sanit")) return "🚿";
+  const n = (name || "").toLowerCase();
+  // Primary mappings for your current categories
+  if (n.includes("tile")) return "🧱";                                      // Tiles
+  if (n.includes("sanit") || n.includes("ceramic")) return "🚿";            // Sanitaryware (Ceramic)
+  if (n.includes("mirror") || n.includes("glass")) return "🪞";             // Mirrors & Glass
+  if (n.includes("fixture") || n.includes("fitting") || n.includes("metal")) return "🔩"; // Metal Fixtures & Fittings
+  if (n.includes("connect") || n.includes("fasten") || n.includes("screw") || n.includes("bolt")) return "🪛"; // Connectors & Fasteners
+  if (n.includes("adhes") || n.includes("chemical") || n.includes("tape") || n.includes("sealant") || n.includes("glue")) return "🧪"; // Adhesives, Chemicals & Tapes
+
+  // Secondary/common fallbacks
   if (n.includes("faucet") || n.includes("tap")) return "🚰";
   if (n.includes("plumb")) return "🪠";
   if (n.includes("elect")) return "🔌";
-  if (n.includes("adhes") || n.includes("glue")) return "🧴";
   if (n.includes("granite") || n.includes("marble") || n.includes("stone")) return "🪨";
   return "📦";
 }
+
 
 
 

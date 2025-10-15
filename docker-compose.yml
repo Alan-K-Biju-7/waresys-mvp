@@ -15,7 +15,7 @@ services:
       - OCR_SYNC=1                     # ✅ process OCR inline in the API for swagger demos
     volumes:
       - .:/app
-      - ./app/uploads:/app/uploads
+      - waresys_uploads:/app/uploads   # ⬅️ use named volume (fixes perms)
     depends_on:
       db:
         condition: service_healthy
@@ -36,7 +36,7 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - .:/app
-      - ./app/uploads:/app/uploads
+      - waresys_uploads:/app/uploads   # ⬅️ use same named volume
     depends_on:
       db:
         condition: service_healthy
@@ -59,8 +59,6 @@ services:
     depends_on:
       - api    # <-- CHANGE this if your API service key is different
     restart: unless-stopped
-
-
 
   db:
     image: postgres:15
@@ -94,6 +92,7 @@ services:
 
 volumes:
   db-data:
+  waresys_uploads:   # ⬅️ new named volume for /app/uploads
 
 networks:
   waresys_net:
