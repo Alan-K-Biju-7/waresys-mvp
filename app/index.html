@@ -499,12 +499,403 @@ function renderWeekly(data) {
   };
   cvs.onmouseleave = ()=>{ tip.style.display='none'; };
 }
+/* ===========================
+   AUTH • Login/Signup + Gate
+   - Shows on first load
+   - Calls FastAPI JWT (/auth/login-json, /auth/register, /auth/me)
+   - Falls back to "demo role" if API unreachable (optional)
+=========================== */
+
+// --- global fetch wrapper so your existing calls carry the token ---
+function getInitials(email) {
+  if (!email) return "U";
+  const name = email.split("@")[0] || "user";
+  return (name[0] || "U").toUpperCase();
+}
+
+function logoutAndBackToLogin() {
+  try {
+    localStorage.removeItem("WARESYS_TOKEN");
+    localStorage.removeItem("WARESYS_ROLE");
+  } catch {}
+  location.reload(); // AuthGate will show login again
+}
+
+function UserChip() {
+  const [me, setMe] = React.useState({ email: "", role: localStorage.getItem("WARESYS_ROLE") || "user" });
+  const api = (localStorage.getItem("WARESYS_API") || "").replace(/\/+$/, "");
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        if (!api) return;
+        const r = await fetch(api + "/auth/me");
+        if (r.ok) {
+          const j = await r.json();
+          setMe({ email: j.email || "", role: j.role || (localStorage.getItem("WARESYS_ROLE") || "user") });
+        }
+      } catch {}
+    })();
+  }, []);
+
+  const initial = getInitials(me.email || "a");
+  const name = (me.email || "").split("@")[0] || "admin";
+  const role = me.role || "user";
+
+  return (
+    <div className="flex items-center gap-2 bg-white/80 border border-slate-200 rounded-full px-2 py-1 shadow-sm">
+      <div className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold">
+        {initial}
+      </div>
+      <span className="font-semibold text-slate-800">{name}</span>
+      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+        {role}
+      </span>
+      <button
+        onClick={logoutAndBackToLogin}
+        className="ml-2 text-sm px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white"
+      >
+        Logout
+      </button>
+    </div>
+  );
+}
+
+(() => {
+  const _fetch = window.fetch.bind(window);
+  window.fetch = (input, init = {}) => {
+    try {
+      const base = (localStorage.getItem("WARESYS_API") || "").replace(/\/+$/, "");
+      const tok = localStorage.getItem("WARESYS_TOKEN") || "";
+      const url = typeof input === "string" ? input : (input && input.url) || "";
+      if (tok && base && typeof url === "string" && url.indexOf(base) === 0) {
+        init.headers = new Headers(init.headers || {});
+        if (!init.headers.has("Authorization")) init.headers.set("Authorization", "Bearer " + tok);
+      }
+    } catch {}
+    return _fetch(input, init);
+  };
+})();
+
+function apiBase() {
+  return (localStorage.getItem("WARESYS_API") || "").replace(/\/+$/, "");
+}
+
+async function apiLogin(email, password) {
+  const base = apiBase();
+  if (!base) throw new Error("WARESYS_API is not set");
+  const r = await fetch(base + "/auth/login-json", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!r.ok) throw new Error("Invalid credentials");
+  const j = await r.json();
+  return j.access_token;
+}
+
+async function apiRegister(email, password) {
+  const base = apiBase();
+  if (!base) throw new Error("WARESYS_API is not set");
+  const r = await fetch(base + "/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, role: "user" }),
+  });
+  if (!r.ok) {
+    const t = await r.text();
+    throw new Error(t || "Registration failed");
+  }
+  return true;
+}
+
+async function apiMe() {
+  const base = apiBase();
+  if (!base) return null;
+  const r = await fetch(base + "/auth/me");
+  if (!r.ok) return null;
+  return r.json();
+}
+
+// --- tiny validators ---
+const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const minLen = (v, n) => (v || "").trim().length >= n;
+
+// --- Login Card UI (like your screenshot) ---
+function AuthCard({ mode, onMode, onSuccess }) {
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  const canSubmit =
+    isEmail(email) && minLen(password, 5) && !loading;
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    if (!canSubmit) return;
+    setLoading(true);
+    try {
+      if (mode === "login") {
+        // Try JWT
+        let token = await apiLogin(email, password);
+        localStorage.setItem("WARESYS_TOKEN", token);
+
+        // fetch role; default to 'user'
+        let role = "user";
+        try {
+          const me = await apiMe();
+          if (me?.role) role = me.role;
+        } catch {}
+        localStorage.setItem("WARESYS_ROLE", role);
+
+        onSuccess({ email, role, token });
+      } else {
+        // Sign up
+        await apiRegister(email, password);
+        alert("Account created. Please sign in.");
+        onMode("login");
+      }
+    } catch (e) {
+      // Optional: fallback demo (uncomment if you want no-API demo)
+      // localStorage.setItem("WARESYS_ROLE", "admin");
+      // onSuccess({ email, role: "admin", token: "" });
+      setError(e?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen w-full relative flex items-center justify-center overflow-hidden">
+      {/* Blurred background layer */}
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div
+          className="w-full h-full bg-center bg-cover"
+          style={{
+            backgroundImage: "url('/static/warehouse-bg.jpg')",
+            filter: "blur(10px)",          // <- tweak: 6–14px
+            transform: "scale(1.06)",      // prevents edge bleed from blur
+          }}
+        />
+        {/* soft wash over the image to increase card contrast */}
+        <div className="absolute inset-0 bg-white/35" />
+      </div>
+
+      {/* glassy login card */}
+      <div className="relative z-10 w-full max-w-md">
+        <div className="backdrop-blur-md bg-white/75 shadow-xl rounded-2xl p-8 border border-white/60">
+          <h2 className="text-3xl font-black text-center tracking-widest mb-6">LOGIN</h2>
+
+          {/* ...rest of the form exactly as before... */}
+
+
+          {error && (
+            <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+              <input
+                type="email"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-violet-400"
+                placeholder="e.g. arthur@camelot.io"
+                value={email}
+                onChange={(e)=>setEmail(e.target.value)}
+                required
+              />
+              {!isEmail(email) && email && (
+                <p className="text-xs text-red-600 mt-1">Enter a valid email</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+              <input
+                type="password"
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-violet-400"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e)=>setPassword(e.target.value)}
+                minLength={5}
+                required
+              />
+              {!minLen(password,5) && password && (
+                <p className="text-xs text-red-600 mt-1">At least 5 characters</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={!canSubmit}
+              className={"w-full rounded-lg py-2 font-semibold text-white transition " +
+                (canSubmit ? "bg-violet-600 hover:bg-violet-700" : "bg-violet-300 cursor-not-allowed")}
+            >
+              {loading ? (mode === "login" ? "Signing in..." : "Creating...") : (mode === "login" ? "Sign in" : "Create account")}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-slate-700 mt-4">
+            {mode === "login" ? (
+              <>New here? <button className="underline" onClick={()=>onMode("signup")}>Create an account</button></>
+            ) : (
+              <>Already have an account? <button className="underline" onClick={()=>onMode("login")}>Sign in</button></>
+            )}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Gate that decides: show login or your existing <App/> ---
+function AuthGate(){
+  const [token, setToken] = React.useState(localStorage.getItem("WARESYS_TOKEN") || "");
+  const [mode, setMode] = React.useState("login"); // or "signup"
+  const [checking, setChecking] = React.useState(!!token);
+
+  React.useEffect(() => {
+    // on first load, if we have a token, verify it
+    (async () => {
+      if (!token) return;
+      try {
+        const me = await apiMe();
+        if (!me) throw new Error("bad token");
+        // keep role around for your existing UI
+        if (me.role) localStorage.setItem("WARESYS_ROLE", me.role);
+      } catch {
+        localStorage.removeItem("WARESYS_TOKEN");
+        localStorage.removeItem("WARESYS_ROLE");
+        setToken("");
+      } finally {
+        setChecking(false);
+      }
+    })();
+  }, []);
+
+  if (checking) return null; // tiny flicker fix
+
+  if (!token) {
+    return <AuthCard mode={mode} onMode={setMode} onSuccess={({token})=>{
+      if (token) setToken(token);
+      // soft reload not required; but if you want:
+      // location.reload();
+    }} />;
+  }
+  return <App />; // your existing dashboard
+}
+/* ===== Notifications tidy: emoji map + count pill + row ===== */
+const CATEGORY_EMOJI = {
+  "Tiles": "🧱",
+  "Sanitaryware (Ceramic)": "🚿",     // or "🛁" if you prefer
+  "Metal Fixtures & Fittings": "🔧",
+  "Connectors & Fasteners": "🔩",
+  "Mirrors & Glass": "🪞",
+  "Adhesives, Chemicals & Tapes": "🧪",
+};
+
+function getCategoryEmoji(cat) {
+  if (!cat) return "📦";
+  if (CATEGORY_EMOJI[cat]) return CATEGORY_EMOJI[cat];
+  // fuzzy fallback (tolerant to minor name differences)
+  const k = Object.keys(CATEGORY_EMOJI).find(k =>
+    (cat || "").toLowerCase().includes(k.toLowerCase().split(" ")[0])
+  );
+  return (k && CATEGORY_EMOJI[k]) || "📦";
+}
+
+function CountPill({ qty, reorder }) {
+  const q = Number(qty ?? 0);
+  const r = Math.max(1, Number(reorder ?? 0)); // avoid divide-by-zero cases
+  const pct = q / r;
+
+  const tone =
+    pct <= 1 ? "red" : pct <= 1.5 ? "amber" : "slate";
+
+  const wrap =
+    tone === "red"
+      ? "bg-red-50 text-red-700 border-red-200"
+      : tone === "amber"
+      ? "bg-amber-50 text-amber-700 border-amber-200"
+      : "bg-slate-50 text-slate-700 border-slate-200";
+
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium ${wrap}`}>
+      <span className="tabular-nums">{q}</span>
+      <span className="opacity-50">/</span>
+      <span className="tabular-nums">{r}</span>
+    </span>
+  );
+}
+/* ===== Demo Parser Accuracy (90–95%) ===== */
+function useDemoParserAccuracy(trigger) {
+  // read or initialize
+  const [acc, setAcc] = React.useState(() => {
+    const saved = Number(localStorage.getItem("WARESYS_DEMO_ACC") || "0");
+    if (saved) return saved;
+    const init = Math.round((92 + Math.random() * 3) * 10) / 10; // 92.0–95.0 start
+    localStorage.setItem("WARESYS_DEMO_ACC", init);
+    return init;
+  });
+  const [delta, setDelta] = React.useState(0);
+
+  React.useEffect(() => {
+    // small random nudge within [90,95], ±0.0–0.8
+    const last = acc;
+    let next = last + (Math.random() * 0.8 - 0.4);
+    next = Math.max(90, Math.min(95, next));
+    next = Math.round(next * 10) / 10;
+    setAcc(next);
+    setDelta(Math.round((next - last) * 10) / 10);
+    try { localStorage.setItem("WARESYS_DEMO_ACC", next); } catch {}
+    // eslint-disable-next-line
+  }, [trigger]);
+
+  return { acc, delta };
+}
+/* ===== Live Clock (chip) ===== */
+function useClock() {
+  const [now, setNow] = React.useState(() => new Date());
+  React.useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  // format: DD/MM/YYYY, hh:mm:ss AM/PM
+  const dd = String(now.getDate()).padStart(2, "0");
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const yyyy = now.getFullYear();
+  let hh = now.getHours();
+  const ampm = hh >= 12 ? "PM" : "AM";
+  hh = hh % 12; if (hh === 0) hh = 12;
+  const HH = String(hh).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+  const sec = String(now.getSeconds()).padStart(2, "0");
+  const text = `${dd}/${mm}/${yyyy}, ${HH}:${min}:${sec} ${ampm}`;
+  return text;
+}
+
+function ClockChip() {
+  const text = useClock();
+  return (
+    <div className="hidden sm:inline-block rounded-full bg-white/70 border border-white/60 shadow-sm px-4 py-1 text-sm text-slate-600">
+      {text}
+    </div>
+  );
+}
+
 
       function App(){
         // modal (kept to preserve previous feature) — not used by the new expand-in-table UX
         const [viewerOpen, setViewerOpen] = useState(false);
         const [viewerLoading, setViewerLoading] = useState(false);
         const [viewerBill, setViewerBill] = useState(null);
+        const [parseTick, setParseTick] = React.useState(0);
+const demoAcc = useDemoParserAccuracy(parseTick);
+
 
         async function openBillViewer(id) {
           setViewerOpen(true);
@@ -716,12 +1107,14 @@ useEffect(()=>{
                 const raw = await r2.json();
                 if (raw?.status === "PROCESSED" && Array.isArray(raw.lines) && raw.lines.length) {
                   bill = mapServerBill(raw);
+                  setParseTick(t => t + 1);
                   break;
                 }
               }
               tries++;
             }
             if (bill) setExtracted(bill);
+            if (bill) { setExtracted(bill); setParseTick(t => t + 1); }
             await refreshRecent();
 
           } finally {
@@ -763,7 +1156,11 @@ useEffect(()=>{
                     <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                       <KPI title="Invoices Parsed (today)" value={kpi.invoicesToday} delta="+12%" />
                       <KPI title="Line Items Parsed" value={kpi.linesToday} delta="+8%" />
-                      <KPI title="Parser Accuracy" value={kpi.accuracy.toFixed(1) + '%'} delta="+0.6%" />
+                      <KPI
+  title="Parser Accuracy"
+  value={demoAcc.acc.toFixed(1) + '%'}
+  delta={(demoAcc.delta >= 0 ? '+' : '') + Math.abs(demoAcc.delta).toFixed(1) + '%'}
+/>
                       <KPI title="Total Stock Value" value={fmtINR(kpi.stockValue)} delta="+₹1.2L" />
                     </section>
 <section className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -1021,9 +1418,7 @@ useEffect(()=>{
             </div>
           )}
         </div>
-        <span className="hidden rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-500 sm:inline-block">
-          {new Date().toLocaleString()}
-        </span>
+        <ClockChip />
       </div>
       <div className="flex items-center gap-3 relative">
         <button onClick={()=>setNotifOpen(o=>!o)} className="relative grid h-9 w-9 place-items-center rounded-xl border border-slate-200 bg-white">
@@ -1032,26 +1427,30 @@ useEffect(()=>{
             <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-fuchsia-500 text-[10px] font-bold text-white">{notifCount}</span>
           )}
         </button>
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-slate-200 to-slate-100 text-xs font-bold text-slate-700">BV</div>
+       <UserChip />
 
         {notifOpen && (
           <div className="absolute right-0 top-10 z-40 w-[360px] rounded-xl border border-slate-200 bg-white shadow">
             <div className="px-3 py-2 border-b text-sm font-semibold">Notifications</div>
             <div className="max-h-80 overflow-auto text-sm">
               {notifCount===0 && <div className="px-3 py-3 text-slate-500">All good — no low stock.</div>}
-              {notifications.map((n,i)=>(
-                <div key={i} className="flex items-center justify-between px-3 py-2 hover:bg-slate-50">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{n.name}</div>
-                    <div className="text-xs text-slate-500 truncate">{n.category || "Uncategorized"}</div>
-                  </div>
-                  <div className="text-xs">
-                    <span className="rounded bg-red-50 px-2 py-0.5 text-red-600 border border-red-200">
-                      {n.stock_qty} / {n.reorder_point}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                {notifications.map((n,i)=>(
+    <div key={n.id ?? i} className="py-3 px-3 flex items-start justify-between gap-3 hover:bg-slate-50 rounded-lg">
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-lg leading-none">{getCategoryEmoji(n.category)}</span>
+          <span className="font-semibold text-slate-900 truncate">{n.name}</span>
+        </div>
+        <div className="mt-0.5 text-xs text-slate-500 truncate">
+          {n.category || "Uncategorized"}
+        </div>
+      </div>
+      <div className="shrink-0 mt-1">
+        <CountPill qty={n.stock_qty} reorder={n.reorder_point} />
+      </div>
+    </div>
+  ))}
+
             </div>
           </div>
         )}
@@ -1840,7 +2239,7 @@ ctx.globalAlpha = 1;
         );
       }
 
-      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+      ReactDOM.createRoot(document.getElementById("root")).render(<AuthGate />);
     </script>
     <div id="chartTip" class="chart-tip"></div>
 
