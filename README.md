@@ -1,12 +1,3 @@
----
-
-# 🧾 **Waresys – Intelligent Invoice OCR & Warehouse Management System**
-
- **Version:** 1.0 • **Framework:** FastAPI + Celery + PostgreSQL + React
- **Stack:** Python, SQLAlchemy, Redis, Tesseract OCR, pdfplumber, Tailwind/React (Frontend)
-
----
-
 ## 📘 **Project Overview**
 
 **Waresys** is an intelligent **invoice OCR and inventory management system** that automates data extraction from vendor invoices and synchronizes it with a warehouse stock database.
