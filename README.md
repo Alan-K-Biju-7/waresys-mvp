@@ -2,8 +2,8 @@
 
 # 🧾 **Waresys – Intelligent Invoice OCR & Warehouse Management System**
 
-> **Version:** 1.0 • **Framework:** FastAPI + Celery + PostgreSQL + React
-> **Stack:** Python, SQLAlchemy, Redis, Tesseract OCR, pdfplumber, Tailwind/React (Frontend)
+ **Version:** 1.0 • **Framework:** FastAPI + Celery + PostgreSQL + React
+ **Stack:** Python, SQLAlchemy, Redis, Tesseract OCR, pdfplumber, Tailwind/React (Frontend)
 
 ---
 
