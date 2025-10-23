@@ -6,8 +6,11 @@ from .config import settings
 from typing import List
 from fastapi import HTTPException
 from . import crud, models, schemas
+from .tasks import celery_app
 
 
+TASK_NAME = os.getenv("OCR_TASK_NAME", "app.tasks.process_invoice")
+OCR_SYNC = os.getenv("OCR_SYNC", "0") == "1"
 app = FastAPI(title="Waresys MVP", version="1.0")
 
 def get_db():
