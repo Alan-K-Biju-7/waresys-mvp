@@ -50,5 +50,10 @@ def upload_invoice(
     with open(dest, "wb") as f:
         f.write(file.file.read())
     return {"message": f"Uploaded {file.filename}"}
-bash
-Copy code
+@app.put("/bills/{bill_id}")
+def update_bill(bill_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    dest = os.path.join("uploads", file.filename)
+    with open(dest, "wb") as f:
+        f.write(file.file.read())
+    return {"bill_id": bill_id, "message": "Bill updated"}
+
