@@ -63,6 +63,7 @@ def get_bill(bill_id: int, db: Session = Depends(get_db)):
     if not bill:
         raise HTTPException(404, "Bill not found")
     return bill
+
 @app.post("/bills/{bill_id}/confirm")
 def confirm(bill_id: int, db: Session = Depends(get_db)):
     return {"ok": True, "bill_id": bill_id, "status": "CONFIRMED"}
