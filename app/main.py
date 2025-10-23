@@ -32,3 +32,9 @@ def create_product(p: schemas.ProductIn, db: Session = Depends(get_db)):
 def list_products(db: Session = Depends(get_db)):
     return db.query(models.Product).limit(50).all()
 
+def _maybe_run_inline_ocr(db: Session, bill: object, file_path: str):
+    try:
+        from app.ocr_pipeline import process_invoice
+        process_invoice(file_path, db, bill.id)
+    except Exception as e:
+        logging.exception("Inline OCR failed: %s", e)
