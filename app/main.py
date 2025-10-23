@@ -12,3 +12,7 @@ def get_db():
         yield db
     finally:
         db.close()
+@app.on_event("startup")
+def _startup():
+    os.makedirs("uploads", exist_ok=True)
+    init_db()
