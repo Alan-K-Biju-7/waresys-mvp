@@ -108,3 +108,12 @@ def ping(db: Session = Depends(get_db)):
 @app.get("/bills")
 def list_bills():
     return [{"bill_id": 1, "party": "ABC Traders"}]
+
+@app.get("/dashboard/summary")
+def dashboard_summary():
+    return {
+        "products_total": 5,
+        "stock_total_qty": 250,
+        "bills_processed": 12,
+        "bills_pending": 3
+    }
