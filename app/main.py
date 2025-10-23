@@ -85,3 +85,7 @@ def create_vendor(vendor: dict):
 @app.get("/vendors")
 def list_vendors():
     return [{"id": 1, "name": "Sample Vendor"}]
+
+@app.get("/reviews")
+def list_reviews():
+    return [{"id": 1, "notes": "Check total"}]
