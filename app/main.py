@@ -8,7 +8,8 @@ from fastapi import HTTPException
 from . import crud, models, schemas
 from .tasks import celery_app
 from fastapi import UploadFile, File, Form
-
+from sqlalchemy.exc import IntegrityError
+from fastapi.responses import JSONResponse
 
 TASK_NAME = os.getenv("OCR_TASK_NAME", "app.tasks.process_invoice")
 OCR_SYNC = os.getenv("OCR_SYNC", "0") == "1"
@@ -71,3 +72,8 @@ def confirm(bill_id: int, db: Session = Depends(get_db)):
 @app.get("/stock/low")
 def low_stock():
     return {"items": []}
+
+
+@app.exception_handler(IntegrityError)
+def integrity_error_handler(request, exc):
+    return JSONResponse(status_code=400, content={"error": "Integrity error"})
