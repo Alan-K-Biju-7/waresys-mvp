@@ -89,3 +89,7 @@ def list_vendors():
 @app.get("/reviews")
 def list_reviews():
     return [{"id": 1, "notes": "Check total"}]
+
+@app.get("/search")
+def global_search(q: str):
+    return {"query": q, "results": []}
