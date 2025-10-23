@@ -104,3 +104,7 @@ def ping(db: Session = Depends(get_db)):
         return {"status": "ok"}
     except Exception as e:
         return {"status": "error", "detail": str(e)}
+    
+@app.get("/bills")
+def list_bills():
+    return [{"bill_id": 1, "party": "ABC Traders"}]
