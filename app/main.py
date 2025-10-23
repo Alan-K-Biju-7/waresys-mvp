@@ -10,6 +10,8 @@ from .tasks import celery_app
 from fastapi import UploadFile, File, Form
 from sqlalchemy.exc import IntegrityError
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
+
 
 TASK_NAME = os.getenv("OCR_TASK_NAME", "app.tasks.process_invoice")
 OCR_SYNC = os.getenv("OCR_SYNC", "0") == "1"
@@ -93,3 +95,12 @@ def list_reviews():
 @app.get("/search")
 def global_search(q: str):
     return {"query": q, "results": []}
+
+
+@app.get("/ping")
+def ping(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "ok"}
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
