@@ -77,3 +77,11 @@ def low_stock():
 @app.exception_handler(IntegrityError)
 def integrity_error_handler(request, exc):
     return JSONResponse(status_code=400, content={"error": "Integrity error"})
+
+@app.post("/vendors")
+def create_vendor(vendor: dict):
+    return {"created": vendor}
+
+@app.get("/vendors")
+def list_vendors():
+    return [{"id": 1, "name": "Sample Vendor"}]
