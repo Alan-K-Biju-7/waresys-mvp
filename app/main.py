@@ -67,3 +67,7 @@ def get_bill(bill_id: int, db: Session = Depends(get_db)):
 @app.post("/bills/{bill_id}/confirm")
 def confirm(bill_id: int, db: Session = Depends(get_db)):
     return {"ok": True, "bill_id": bill_id, "status": "CONFIRMED"}
+
+@app.get("/stock/low")
+def low_stock():
+    return {"items": []}
