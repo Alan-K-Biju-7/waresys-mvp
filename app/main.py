@@ -7,6 +7,7 @@ from typing import List
 from fastapi import HTTPException
 from . import crud, models, schemas
 from .tasks import celery_app
+from fastapi import UploadFile, File, Form
 
 
 TASK_NAME = os.getenv("OCR_TASK_NAME", "app.tasks.process_invoice")
@@ -38,3 +39,16 @@ def _maybe_run_inline_ocr(db: Session, bill: object, file_path: str):
         process_invoice(file_path, db, bill.id)
     except Exception as e:
         logging.exception("Inline OCR failed: %s", e)
+
+@app.post("/bills/ocr")
+def upload_invoice(
+    file: UploadFile = File(...),
+    party_name: str | None = Form(None),
+    db: Session = Depends(get_db),
+):
+    dest = os.path.join("uploads", file.filename)
+    with open(dest, "wb") as f:
+        f.write(file.file.read())
+    return {"message": f"Uploaded {file.filename}"}
+bash
+Copy code
