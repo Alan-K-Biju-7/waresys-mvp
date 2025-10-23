@@ -57,3 +57,9 @@ def update_bill(bill_id: int, file: UploadFile = File(...), db: Session = Depend
         f.write(file.file.read())
     return {"bill_id": bill_id, "message": "Bill updated"}
 
+@app.get("/bills/{bill_id}")
+def get_bill(bill_id: int, db: Session = Depends(get_db)):
+    bill = db.get(models.Bill, bill_id)
+    if not bill:
+        raise HTTPException(404, "Bill not found")
+    return bill
