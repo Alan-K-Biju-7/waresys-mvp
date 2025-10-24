@@ -960,3 +960,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: add totals regex (CGST/SGST/IGST/grand total) (marker)
 
 # feat: parse invoice text (items, totals, vendor metadata) (marker)
+
+# feat: add plausibility guard for line items (marker)
