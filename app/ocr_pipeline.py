@@ -936,3 +936,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: extract invoice number (inline and next-line) (marker)
 
 # feat: extract bill date with fallbacks (marker)
+
+# chore: canonicalize common vendor OCR variants (marker)
