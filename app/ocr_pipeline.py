@@ -928,3 +928,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: extract text from embedded text layer (marker)
 
 # feat: add Tesseract OCR fallback (marker)
+
+# feat: robust extractor with textlayer→OCR fallback (marker)
