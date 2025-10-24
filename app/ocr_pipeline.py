@@ -892,3 +892,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: add third-party libraries (pdfplumber, pdf2image, pytesseract) (marker)
 
 # feat: wire internal models/crud and parsing helper (marker)
+
+# feat: add DEC/INT/UOM/HSN regex primitives (marker)
