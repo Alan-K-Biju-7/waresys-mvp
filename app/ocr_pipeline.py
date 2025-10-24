@@ -926,3 +926,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: prefer last 1–2 clean lines as item description (marker)
 
 # feat: extract text from embedded text layer (marker)
+
+# feat: add Tesseract OCR fallback (marker)
