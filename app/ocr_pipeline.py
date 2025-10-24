@@ -900,3 +900,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: add amount-first item line regex (marker)
 
 # chore: add header noise filter regex (marker)
+
+# feat: add metadata regex for GST, phone and email (marker)
