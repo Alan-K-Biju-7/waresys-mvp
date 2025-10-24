@@ -908,3 +908,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: add invoice-like and month tokens (marker)
 
 # feat: add flexible date normalizer (marker)
+
+# feat: vendor heuristics (all-caps & positive tokens) (marker)
