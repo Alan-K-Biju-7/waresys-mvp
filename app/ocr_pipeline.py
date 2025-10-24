@@ -932,3 +932,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: robust extractor with textlayer→OCR fallback (marker)
 
 # feat: slice top header before Consignee/Buyer (marker)
+
+# feat: extract invoice number (inline and next-line) (marker)
