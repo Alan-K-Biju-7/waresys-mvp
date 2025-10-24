@@ -912,3 +912,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: vendor heuristics (all-caps & positive tokens) (marker)
 
 # chore: add negative address-like tokens (marker)
+
+# chore: add right-panel label filters (marker)
