@@ -954,3 +954,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: extract line items from visible tables (marker)
 
 # feat: parse items from free text using regex windows (marker)
+
+# chore: de-duplicate similar item rows (marker)
