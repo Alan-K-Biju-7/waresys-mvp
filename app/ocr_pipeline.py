@@ -940,3 +940,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: canonicalize common vendor OCR variants (marker)
 
 # chore: sanitize vendor display name (marker)
+
+# feat: score header lines to select vendor name (marker)
