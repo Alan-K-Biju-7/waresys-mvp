@@ -978,3 +978,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: process_invoice stage 2—reconcile totals (marker)
 
 # feat: process_invoice stage 3—save lines and select grand total (marker)
+
+# feat: process_invoice stage 4—attach vendor, set flags, commit (marker)
