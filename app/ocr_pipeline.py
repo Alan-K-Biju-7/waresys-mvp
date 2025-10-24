@@ -974,3 +974,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: prefer table-derived items when table looks valid (marker)
 
 # feat: process_invoice stage 1—extract, choose, repair lines (marker)
+
+# feat: process_invoice stage 2—reconcile totals (marker)
