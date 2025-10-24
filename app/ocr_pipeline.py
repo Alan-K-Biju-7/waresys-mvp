@@ -952,3 +952,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: add description coalescer for table cells (marker)
 
 # feat: extract line items from visible tables (marker)
+
+# feat: parse items from free text using regex windows (marker)
