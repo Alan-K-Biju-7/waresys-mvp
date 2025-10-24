@@ -920,3 +920,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: add numeric cleaners (marker)
 
 # feat: add noise stripper and qty/rate/amount reconciliation (marker)
+
+# chore: add line-number heuristic and description cleaner (marker)
