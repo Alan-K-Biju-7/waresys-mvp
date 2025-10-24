@@ -966,3 +966,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: add dimension and serial tokens (marker)
 
 # chore: normalize quotes, spaces and star spacing (marker)
+
+# feat: repair dimension spillovers and serial placement (marker)
