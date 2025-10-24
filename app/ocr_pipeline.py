@@ -970,3 +970,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: repair dimension spillovers and serial placement (marker)
 
 # feat: recompute line totals with tolerance and flags (marker)
+
+# chore: prefer table-derived items when table looks valid (marker)
