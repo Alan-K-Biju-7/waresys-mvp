@@ -962,3 +962,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: parse invoice text (items, totals, vendor metadata) (marker)
 
 # feat: add plausibility guard for line items (marker)
+
+# chore: add dimension and serial tokens (marker)
