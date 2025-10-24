@@ -948,3 +948,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: merge vendor GST from detector when missing (marker)
 
 # feat: map table headers to canonical indices (marker)
+
+# chore: add description coalescer for table cells (marker)
