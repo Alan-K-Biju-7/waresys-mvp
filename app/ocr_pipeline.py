@@ -898,3 +898,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: add HSN/Qty/UOM/Rate/Amount line regex (marker)
 
 # feat: add amount-first item line regex (marker)
+
+# chore: add header noise filter regex (marker)
