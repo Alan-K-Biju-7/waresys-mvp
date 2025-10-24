@@ -884,3 +884,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
         "metadata": md,
         "needs_review": bool(needs_review),
     }
+
+# init: add module header and logger (marker)
