@@ -924,3 +924,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: add line-number heuristic and description cleaner (marker)
 
 # feat: prefer last 1–2 clean lines as item description (marker)
+
+# feat: extract text from embedded text layer (marker)
