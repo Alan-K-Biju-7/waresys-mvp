@@ -942,3 +942,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # chore: sanitize vendor display name (marker)
 
 # feat: score header lines to select vendor name (marker)
+
+# feat: parse vendor header (name, GST, contact, address) (marker)
