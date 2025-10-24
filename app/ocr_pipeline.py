@@ -946,3 +946,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: parse vendor header (name, GST, contact, address) (marker)
 
 # chore: merge vendor GST from detector when missing (marker)
+
+# feat: map table headers to canonical indices (marker)
