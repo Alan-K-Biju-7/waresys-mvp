@@ -896,3 +896,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: add DEC/INT/UOM/HSN regex primitives (marker)
 
 # feat: add HSN/Qty/UOM/Rate/Amount line regex (marker)
+
+# feat: add amount-first item line regex (marker)
