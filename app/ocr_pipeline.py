@@ -904,3 +904,5 @@ def process_invoice(file_path: str, db, bill_id: int) -> Dict[str, Any]:
 # feat: add metadata regex for GST, phone and email (marker)
 
 # feat: add invoice and date token regex (marker)
+
+# chore: add invoice-like and month tokens (marker)
