@@ -246,3 +246,24 @@ def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
     vblock = _extract_vendor_block(text)
     data["vendor"] = vblock
     data["vendor_name"] = vblock.get("name")
+
+ m_voucher = re.search(
+        r"(?:Voucher|Invoice)\s*No\.?\s*[:\-]?\s*([A-Z0-9\/\-]+)",
+        text,
+        re.I,
+    )
+    data["voucher_no"] = m_voucher.group(1).strip() if m_voucher else None
+
+    m_date = re.search(
+        r"(?:Dated|Date)\s*[:\-]?\s*([0-9]{1,2}[-/ ][A-Za-z]{3}[A-Za-z]?[-/ ][0-9]{2,4}|[0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4})",
+        text,
+        re.I,
+    )
+    if m_date:
+        rawd = m_date.group(1).replace(" ", "-")
+        for fmt in ("%d-%b-%y", "%d-%b-%Y", "%d-%m-%Y", "%d/%m/%Y", "%d-%m-%y"):
+            try:
+                data["invoice_date"] = datetime.strptime(rawd, fmt).date()
+                break
+            except Exception:
+                pass
