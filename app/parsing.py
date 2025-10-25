@@ -60,3 +60,16 @@ def parse_header(ocr_text: str) -> Dict[str, Optional[str]]:
 _QTY_MAX = 1_000_000        # qty beyond this is almost surely OCR noise
 _PRICE_MAX = 10_000_000     # likewise for unit price
 _LINE_TOTAL_MAX = 50_000_000
+def _is_sane(qty: float, unit_price: float, line_total: float) -> bool:
+    """
+    Basic sanity checks to filter out obviously wrong OCR numbers.
+    Rejects negative or excessively large quantities, prices, or totals.
+    """
+    if qty < 0 or unit_price < 0 or line_total < 0:
+        return False
+    if qty > _QTY_MAX or unit_price > _PRICE_MAX or line_total > _LINE_TOTAL_MAX:
+        return False
+    # reject if implied unit price is absurd
+    if qty > 0 and (line_total / max(qty, 1)) > _PRICE_MAX:
+        return False
+    return True
