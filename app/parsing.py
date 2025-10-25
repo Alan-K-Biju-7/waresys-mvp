@@ -143,3 +143,11 @@ def deduplicate_lines(lines: List[Dict]) -> List[Dict]:
             seen.add(key)
             unique.append(line)
     return unique
+
+# =========================================
+# Vendor-style invoice parsing (GST aware)
+# =========================================
+
+# GSTIN format: 2 digits + 5 letters + 4 digits + 1 letter + 1 alnum + 'Z' + 1 alnum
+GSTIN_RE = r"\b\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]\b"
+INR_CAPTURE = r"(?:₹\s*)?([0-9]{1,3}(?:,[0-9]{3})*(?:\.\d{1,2})|[0-9]+(?:\.\d{1,2})?)"
