@@ -284,3 +284,24 @@ def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
     )
     if m_ship:
         data["ship_to"] = re.sub(r"\s+\n", " ", m_ship.group(1)).strip()
+
+    m_cgst = re.search(r"\bCGST\b\s+" + INR_CAPTURE, text, re.I)
+    m_sgst = re.search(r"\bSGST\b\s+" + INR_CAPTURE, text, re.I)
+    m_igst = re.search(r"\bIGST\b\s+" + INR_CAPTURE, text, re.I)
+    m_trans = re.search(r"(?:TRANSPORT|FREIGHT|DELIVERY).{0,20}\s" + INR_CAPTURE, text, re.I)
+    m_total = re.search(r"(?:Grand\s*Total|Total)\s*[:\-]?\s*₹?\s*" + INR_CAPTURE + r"(?!\s*%)", text, re.I)
+
+    data["cgst"] = _to_decimal(m_cgst.group(1) if m_cgst else None)
+    data["sgst"] = _to_decimal(m_sgst.group(1) if m_sgst else None)
+    data["igst"] = _to_decimal(m_igst.group(1) if m_igst else None)
+    data["other_charges"] = _to_decimal(m_trans.group(1) if m_trans else None)
+    data["total"] = _to_decimal(m_total.group(1) if m_total else None)
+
+    if data["total"]:
+        data["subtotal"] = (
+            data["total"]
+            - data["cgst"]
+            - data["sgst"]
+            - data["igst"]
+            - data["other_charges"]
+        )
