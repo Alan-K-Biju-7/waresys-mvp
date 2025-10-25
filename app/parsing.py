@@ -267,3 +267,20 @@ def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
                 break
             except Exception:
                 pass
+
+
+    m_bill = re.search(
+        r"Buyer\s*\(Bill to\)\s*(.+?)(?:\n\s*\n|Voucher|Buyer’s Ref|Dated)",
+        text,
+        re.I | re.S,
+    )
+    if m_bill:
+        data["bill_to"] = re.sub(r"\s+\n", " ", m_bill.group(1)).strip()
+
+    m_ship = re.search(
+        r"Consignee\s*\(Ship to\)\s*(.+?)(?:\n\s*\n|Buyer|Voucher|Dated)",
+        text,
+        re.I | re.S,
+    )
+    if m_ship:
+        data["ship_to"] = re.sub(r"\s+\n", " ", m_ship.group(1)).strip()
