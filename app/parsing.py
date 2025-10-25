@@ -56,3 +56,7 @@ def parse_header(ocr_text: str) -> Dict[str, Optional[str]]:
         else:
             out[k] = m.group(1).strip()
     return out
+
+_QTY_MAX = 1_000_000        # qty beyond this is almost surely OCR noise
+_PRICE_MAX = 10_000_000     # likewise for unit price
+_LINE_TOTAL_MAX = 50_000_000
