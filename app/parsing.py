@@ -21,3 +21,14 @@ def normalize_text(ocr_text: str) -> str:
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{2,}", "\n", text)
     return text.strip()
+def _clean_num(s: str) -> str:
+    """
+    Clean numeric OCR strings by:
+    - Replacing letter 'O' or 'o' with zero
+    - Removing commas and currency symbols
+    - Stripping whitespace
+    """
+    s = s.replace("O", "0").replace("o", "0")
+    s = s.replace(",", "")
+    s = s.replace("₹", "").replace("$", "")
+    return s.strip()
