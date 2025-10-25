@@ -224,3 +224,25 @@ def _extract_vendor_block(text: str) -> Dict[str, Optional[str]]:
         "contact": phone,
         "email": email,
     }
+
+
+def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
+    data: Dict[str, Any] = {
+        "vendor_name": None,
+        "voucher_no": None,
+        "invoice_date": None,
+        "bill_to": None,
+        "ship_to": None,
+        "subtotal": Decimal("0"),
+        "cgst": Decimal("0"),
+        "sgst": Decimal("0"),
+        "igst": Decimal("0"),
+        "other_charges": Decimal("0"),
+        "total": Decimal("0"),
+        "vendor": None,
+        "lines": [],
+    }
+
+    vblock = _extract_vendor_block(text)
+    data["vendor"] = vblock
+    data["vendor_name"] = vblock.get("name")
