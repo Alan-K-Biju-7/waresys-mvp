@@ -168,3 +168,21 @@ def _find_phone(text: str) -> Optional[str]:
     raw = m.group(1)
     digits = re.sub(r"[^\d+]", "", raw)
     return digits
+def _top_nonempty_lines(text: str, n: int = 40) -> List[str]:
+    return [l.strip() for l in text.splitlines() if l.strip()][:n]
+
+def _guess_vendor_name(text: str) -> Optional[str]:
+    lines = _top_nonempty_lines(text, 50)
+    tokens = re.compile(r"(BUILDWARE|TILE|SANIT|TRAD(?:E|ERS)?|HARDWARE|PVT|LTD|LLP|&|M(?:\s*&\s*)?S\.?)", re.I)
+    for l in lines[:10]:
+        if tokens.search(l) and not re.search(r"tax invoice|invoice|voucher|bill", l, re.I):
+            return l.strip()
+    for idx, l in enumerate(lines):
+        if re.search(GSTIN_RE, l):
+            if idx > 0:
+                return lines[idx - 1]
+            break
+    for l in lines[:6]:
+        if not re.search(r"tax\s*invoice|invoice|voucher", l, re.I):
+            return l
+    return None
