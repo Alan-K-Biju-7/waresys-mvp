@@ -73,3 +73,53 @@ def _is_sane(qty: float, unit_price: float, line_total: float) -> bool:
     if qty > 0 and (line_total / max(qty, 1)) > _PRICE_MAX:
         return False
     return True
+
+def parse_lines(ocr_text: str) -> List[Dict]:
+    """
+    Legacy-ish line parser:
+    - Handles: QTY DESC UNIT_PRICE LINE_TOTAL   or
+               QTY DESC LINE_TOTAL  (unit_price inferred)
+    - Applies sanity checks to avoid inserting garbage rows.
+    """
+    text = normalize_text(ocr_text)
+    MONEY = r"[₹$]?\s*[0-9][0-9,]*(?:\.\d{1,2})?"
+    QTY = r"\d+"
+
+    patterns = [
+        re.compile(rf"^\s*({QTY})\s+(.+?)\s+({MONEY})\s+({MONEY})\s*$", re.MULTILINE),
+        re.compile(rf"^\s*({QTY})\s+(.+?)\s+({MONEY})\s*$", re.MULTILINE),
+    ]
+
+    parsed: List[Dict] = []
+    for pat in patterns:
+        matches = pat.findall(text)
+        if matches:
+            for m in matches:
+                if len(m) == 4:
+                    qty_s, desc, up_s, lt_s = m
+                    qty = float(_clean_num(qty_s) or "0")
+                    unit_price = float(_clean_num(up_s) or "0")
+                    line_total = float(_clean_num(lt_s) or "0")
+                else:
+                    qty_s, desc, lt_s = m
+                    qty = float(_clean_num(qty_s) or "0")
+                    line_total = float(_clean_num(lt_s) or "0")
+                    unit_price = round(line_total / max(qty, 1.0), 2)
+
+                if not _is_sane(qty, unit_price, line_total):
+                    logger.info("[parse_lines] skipping insane row: %s / %s / %s :: %s",
+                                qty, unit_price, line_total, desc[:80])
+                    continue
+
+                parsed.append({
+                    "id": len(parsed) + 1,
+                    "product_id": None,
+                    "description_raw": desc.strip(),
+                    "qty": qty,
+                    "unit_price": unit_price,
+                    "line_total": line_total,
+                    "ocr_confidence": 0.95,
+                })
+            break  # stop after first matching pattern
+
+    return parsed
