@@ -355,3 +355,7 @@ def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
         )
 
     return data
+def detect_vendor_from_text(raw_text: str) -> dict:
+    """Split OCR text into lines and run vendor detector."""
+    lines = [ln.strip() for ln in (raw_text or "").splitlines() if ln.strip()]
+    return detect_vendor_from_lines(lines)
