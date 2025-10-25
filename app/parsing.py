@@ -123,3 +123,23 @@ def parse_lines(ocr_text: str) -> List[Dict]:
             break  # stop after first matching pattern
 
     return parsed
+
+
+def deduplicate_lines(lines: List[Dict]) -> List[Dict]:
+    """
+    Deduplicate OCR line items that may have repeated text/values.
+    Uniqueness is based on (description, qty, unit_price, line_total).
+    """
+    seen = set()
+    unique = []
+    for line in lines:
+        key = (
+            (line.get("description_raw") or "").lower(),
+            round(float(line.get("qty") or 0), 3),
+            round(float(line.get("unit_price") or 0), 2),
+            round(float(line.get("line_total") or 0), 2),
+        )
+        if key not in seen:
+            seen.add(key)
+            unique.append(line)
+    return unique
