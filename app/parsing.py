@@ -319,3 +319,39 @@ def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
         $""",
         re.I | re.M | re.X,
     )
+
+
+    for m in line_re.finditer(text):
+        d = m.groupdict()
+        uom = (
+            "nos"
+            if re.search(r"\bnos?\b", m.group(0), re.I)
+            else ("pcs" if re.search(r"\bpcs?\b", m.group(0), re.I) else "")
+        )
+        qty = _to_decimal(d["qty"] or "0")
+        rate = _to_decimal(d["rate"] or "0")
+        disc = _to_decimal(d["disc"] or "0")
+        amount = _to_decimal(d["amount"] or "0")
+
+        if amount == 0 and qty and rate:
+            amount = (qty * rate * (Decimal("100") - disc) / Decimal("100")).quantize(
+                Decimal("0.01")
+            )
+
+        if not _is_sane(float(qty), float(rate), float(amount)):
+            logger.info("[parse_vendor_invoice_text] skip insane line: %s", m.group(0)[:120])
+            continue
+
+        data["lines"].append(
+            {
+                "description": (d["desc"] or "").strip(),
+                "hsn": (d["hsn"] or "").strip(),
+                "uom": uom,
+                "qty": qty,
+                "rate": rate,
+                "discount_pct": disc,
+                "amount": amount,
+            }
+        )
+
+    return data
