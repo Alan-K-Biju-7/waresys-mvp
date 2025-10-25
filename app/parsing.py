@@ -305,3 +305,17 @@ def parse_vendor_invoice_text(text: str) -> Dict[str, Any]:
             - data["igst"]
             - data["other_charges"]
         )
+
+  line_re = re.compile(
+        r"""
+        ^\s*(\d{1,3})\s+
+        (?P<desc>[A-Za-z0-9\-\*\s\/&\(\)\.,]+?)\s+
+        (?:(?P<hsn>\d{4,8})\s+)?
+        (?:(?:nos?|pcs?|PCS|NOS|Box|BOX)\s+)?
+        (?P<qty>\d{1,7}(?:\.\d{1,3})?)\s+
+        (?P<rate>\d{1,7}(?:\.\d{1,2})?)\s+
+        (?:(?:Disc\.?|Discount)\s*%?\s*(?P<disc>\d{1,2}(?:\.\d{1,2})?))?
+        \s*(?P<amount>\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)?
+        $""",
+        re.I | re.M | re.X,
+    )
