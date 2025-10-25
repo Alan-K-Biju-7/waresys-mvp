@@ -186,3 +186,41 @@ def _guess_vendor_name(text: str) -> Optional[str]:
         if not re.search(r"tax\s*invoice|invoice|voucher", l, re.I):
             return l
     return None
+
+
+def _extract_vendor_block(text: str) -> Dict[str, Optional[str]]:
+    header = "\n".join(_top_nonempty_lines(text, 100))
+    name = _guess_vendor_name(header)
+    gst = None
+    addr = None
+    email = _find_email(header)
+    phone = _find_phone(header)
+
+    m_gst = re.search(GSTIN_RE, header)
+    if m_gst:
+        gst = m_gst.group(0)
+
+    addr_lines: List[str] = []
+    if name:
+        lines = header.splitlines()
+        try:
+            start = next(i for i, l in enumerate(lines) if name in l)
+        except StopIteration:
+            start = 0
+        for l in lines[start + 1 : start + 6]:
+            if re.search(GSTIN_RE, l, re.I):
+                continue
+            if re.search(r"(phone|mob|email|gst|pan|cin|uin)[:\s]", l, re.I):
+                continue
+            if re.search(r"(buyer|consignee|ship\s*to|bill\s*to|voucher|dated)", l, re.I):
+                break
+            addr_lines.append(l.strip())
+    addr = ", ".join([a for a in addr_lines if a]) or None
+
+    return {
+        "name": (name or None),
+        "gst_number": (gst or None),
+        "address": addr,
+        "contact": phone,
+        "email": email,
+    }
