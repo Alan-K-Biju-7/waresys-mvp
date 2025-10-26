@@ -199,3 +199,7 @@ async def ocr_process(file: UploadFile = File(...)):
         items=7,
         inbox_id=f"OCR-{abs(hash(file.filename)) % 10000}",
     )
+
+@router.post("/ocr/approve")
+def ocr_approve(body: OCRApproveIn):
+    return {"ok": True, "approved": len(body.ids)}
