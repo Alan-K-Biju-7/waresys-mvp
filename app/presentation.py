@@ -178,3 +178,12 @@ def list_products(q: Optional[str] = None, category: Optional[str] = None, db: S
         return out
     except Exception:
         return []
+
+@router.get("/vendors", response_model=List[VendorOut])
+def list_vendors(db: Session = Depends(get_db)):
+    try:
+        vs = db.query(models.Vendor).limit(100).all()
+        counts = dict(db.query(models.Bill.vendor_id, func.count(models.Bill.id)).group_by(models.Bill.vendor_id).all())
+        return [VendorOut(name=v.name, email=v.email, phone=v.phone, bills=int(counts.get(v.id, 0))) for v in vs]
+    except Exception:
+        return []
