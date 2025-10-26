@@ -62,3 +62,14 @@ class ProductOut(BaseModel):
     category: Optional[str] = None
     stock: int
     price: float
+
+class VendorIn(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+class VendorOut(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    bills: int = 0
