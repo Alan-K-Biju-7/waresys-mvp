@@ -135,3 +135,22 @@ def dashboard_summary(db: Session = Depends(get_db)):
         "vendors_total": _coalesce_int(vendors_total),
         "category_breakdown": [],
     }
+
+@router.get("/bills/recent", response_model=List[BillRow])
+def bills_recent(db: Session = Depends(get_db)):
+    try:
+        Bill = models.Bill
+        q = db.query(Bill).order_by(Bill.bill_date.desc()).limit(10).all()
+        out: List[BillRow] = []
+        for b in q:
+            out.append(BillRow(
+                bill_no=b.bill_no or str(b.id),
+                vendor=b.vendor.name if b.vendor else "—",
+                date=b.bill_date.isoformat(),
+                items=len(b.lines) if hasattr(b, "lines") else 0,
+                total=float(getattr(b, "total", 0)),
+                status=b.status or "Pending"
+            ))
+        return out
+    except Exception:
+        return []
