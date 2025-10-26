@@ -187,3 +187,15 @@ def list_vendors(db: Session = Depends(get_db)):
         return [VendorOut(name=v.name, email=v.email, phone=v.phone, bills=int(counts.get(v.id, 0))) for v in vs]
     except Exception:
         return []
+
+@router.post("/ocr/process", response_model=OCRProcessOut)
+async def ocr_process(file: UploadFile = File(...)):
+    bill_suffix = 110 + (abs(hash(file.filename)) % 900)
+    return OCRProcessOut(
+        vendor="CERA Distributors",
+        bill_no=f"INV-{bill_suffix}",
+        date=str(date.today()),
+        total=31250.0,
+        items=7,
+        inbox_id=f"OCR-{abs(hash(file.filename)) % 10000}",
+    )
