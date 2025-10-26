@@ -41,3 +41,10 @@ class KPIOut(BaseModel):
     bills_pending: int
     vendors_total: int
     category_breakdown: List[CategorySlice]
+class BillRow(BaseModel):
+    bill_no: str
+    vendor: str
+    date: str
+    items: int
+    total: float
+    status: str
