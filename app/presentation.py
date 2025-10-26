@@ -162,3 +162,19 @@ def create_product(p: ProductIn, db: Session = Depends(get_db)):
         return {"ok": True, "sku": getattr(obj, "sku", p.sku)}
     except Exception as e:
         raise HTTPException(400, f"Create product failed: {e}")
+@router.get("/products", response_model=List[ProductOut])
+def list_products(q: Optional[str] = None, category: Optional[str] = None, db: Session = Depends(get_db)):
+    try:
+        items = db.query(models.Product).limit(100).all()
+        out: List[ProductOut] = []
+        for p in items:
+            out.append(ProductOut(
+                sku=getattr(p, "sku", None),
+                name=p.name,
+                category=getattr(p, "category", None),
+                stock=_coalesce_int(getattr(p, "stock_qty", 0)),
+                price=_coalesce_float(getattr(p, "price", 0.0)),
+            ))
+        return out
+    except Exception:
+        return []
