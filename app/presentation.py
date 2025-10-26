@@ -48,3 +48,17 @@ class BillRow(BaseModel):
     items: int
     total: float
     status: str
+
+class ProductIn(BaseModel):
+    sku: Optional[str] = None
+    name: str
+    category: Optional[str] = None
+    stock: int = 0
+    price: float = 0.0
+
+class ProductOut(BaseModel):
+    sku: Optional[str] = None
+    name: str
+    category: Optional[str] = None
+    stock: int
+    price: float
