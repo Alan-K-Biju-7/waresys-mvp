@@ -102,3 +102,15 @@ def _coalesce_float(v: Any, default: float = 0.0) -> float:
 
 def _s(val: Any, default: str = "") -> str:
     return str(val) if val is not None else default
+
+
+@router.get("/dashboard/summary", response_model=KPIOut)
+def dashboard_summary(db: Session = Depends(get_db)):
+    try:
+        products_total = db.query(models.Product).count()
+    except Exception:
+        products_total = 0
+    try:
+        vendors_total = db.query(models.Vendor).count()
+    except Exception:
+        vendors_total = 0
