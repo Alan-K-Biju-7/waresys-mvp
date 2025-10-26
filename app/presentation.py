@@ -73,3 +73,17 @@ class VendorOut(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     bills: int = 0
+
+class OCRApproveIn(BaseModel):
+    ids: List[str]
+
+class OCRProcessOut(BaseModel):
+    vendor: str
+    bill_no: str
+    date: str
+    total: float
+    items: int
+    inbox_id: str
+
+class OkOut(BaseModel):
+    ok: bool
