@@ -30,3 +30,14 @@ def get_db():
         yield db
     finally:
         db.close()
+
+class CategorySlice(BaseModel):
+    category: str
+    qty: int
+
+class KPIOut(BaseModel):
+    products_total: int
+    stock_total_qty: int
+    bills_pending: int
+    vendors_total: int
+    category_breakdown: List[CategorySlice]
