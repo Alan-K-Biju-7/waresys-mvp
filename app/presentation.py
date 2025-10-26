@@ -87,3 +87,18 @@ class OCRProcessOut(BaseModel):
 
 class OkOut(BaseModel):
     ok: bool
+
+def _coalesce_int(v: Any, default: int = 0) -> int:
+    try:
+        return int(v or 0)
+    except Exception:
+        return default
+
+def _coalesce_float(v: Any, default: float = 0.0) -> float:
+    try:
+        return float(v or 0)
+    except Exception:
+        return default
+
+def _s(val: Any, default: str = "") -> str:
+    return str(val) if val is not None else default
