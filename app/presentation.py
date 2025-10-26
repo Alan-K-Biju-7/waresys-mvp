@@ -207,3 +207,5 @@ def ocr_approve(body: OCRApproveIn):
 @router.post("/reports/publish", response_model=OkOut)
 def publish_report():
     return OkOut(ok=True)
+
+# (placeholder - next commit will paste the complete original full code)
