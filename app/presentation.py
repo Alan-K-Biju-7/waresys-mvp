@@ -203,3 +203,7 @@ async def ocr_process(file: UploadFile = File(...)):
 @router.post("/ocr/approve")
 def ocr_approve(body: OCRApproveIn):
     return {"ok": True, "approved": len(body.ids)}
+
+@router.post("/reports/publish", response_model=OkOut)
+def publish_report():
+    return OkOut(ok=True)
