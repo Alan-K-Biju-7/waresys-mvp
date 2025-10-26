@@ -114,3 +114,24 @@ def dashboard_summary(db: Session = Depends(get_db)):
         vendors_total = db.query(models.Vendor).count()
     except Exception:
         vendors_total = 0
+
+    stock_total_qty = 0
+    try:
+        if hasattr(models.Product, "stock_qty"):
+            stock_total_qty = db.query(func.coalesce(func.sum(models.Product.stock_qty), 0)).scalar() or 0
+    except Exception:
+        stock_total_qty = 0
+
+    bills_pending = 0
+    try:
+        bills_pending = db.query(models.Bill).filter(models.Bill.status != "PROCESSED").count()
+    except Exception:
+        bills_pending = 0
+
+    return {
+        "products_total": _coalesce_int(products_total),
+        "stock_total_qty": _coalesce_int(stock_total_qty),
+        "bills_pending": _coalesce_int(bills_pending),
+        "vendors_total": _coalesce_int(vendors_total),
+        "category_breakdown": [],
+    }
