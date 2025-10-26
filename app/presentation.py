@@ -154,3 +154,11 @@ def bills_recent(db: Session = Depends(get_db)):
         return out
     except Exception:
         return []
+@router.post("/products")
+def create_product(p: ProductIn, db: Session = Depends(get_db)):
+    try:
+        obj = models.Product(sku=p.sku, name=p.name, category=p.category, stock_qty=p.stock, price=p.price)
+        db.add(obj); db.commit(); db.refresh(obj)
+        return {"ok": True, "sku": getattr(obj, "sku", p.sku)}
+    except Exception as e:
+        raise HTTPException(400, f"Create product failed: {e}")
