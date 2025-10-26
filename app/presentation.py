@@ -21,3 +21,12 @@ from sqlalchemy import func
 
 from .db import SessionLocal
 from . import crud, models
+
+router = APIRouter(prefix="/api", tags=["presentation"])
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
