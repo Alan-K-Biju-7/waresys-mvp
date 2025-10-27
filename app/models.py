@@ -7,15 +7,12 @@ from .db import Base
 
 
 # ============================================================
-# Stock movement ledger
+# Parsed Vendor Invoice (new flow)
 # ============================================================
-class StockLedger(Base):
-    __tablename__ = "stock_ledger"
+class Invoice(Base):
+    __tablename__ = "invoices"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
-    qty_change: Mapped[Decimal] = mapped_column(Numeric(12, 3))
-    txn_type: Mapped[str] = mapped_column(String(16))  # IN/OUT/ADJUST
-    ref_bill_id: Mapped[int | None] = mapped_column(ForeignKey("bills.id"), nullable=True)
-    notes: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    vendor_name: Mapped[str | None] = mapped_column(String(255))
+    voucher_no: Mapped[str | None] = mapped_column(String(128))
+    invoice_date: Mapped[date | None] = mapped_column(Date)
