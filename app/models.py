@@ -22,3 +22,12 @@ class Invoice(Base):
     other_charges: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     total: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
     raw_text: Mapped[str | None] = mapped_column(Text)
+
+    lines: Mapped[list["InvoiceLine"]] = relationship(
+        back_populates="invoice",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+
+    def __repr__(self) -> str:
+        return f"<Invoice id={self.id} vendor={self.vendor_name!r} total={self.total}>"
