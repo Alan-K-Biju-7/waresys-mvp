@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -17,3 +18,10 @@ class Vendor(Base):
     gst_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
     contact: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    bills: Mapped[list["Bill"]] = relationship(back_populates="vendor")
+
+    __table_args__ = (Index("ix_vendors_gst", "gst_number"),)
+
+    def __repr__(self) -> str:
+        return f"<Vendor id={self.id} name={self.name!r} gst={self.gst_number!r}>"
