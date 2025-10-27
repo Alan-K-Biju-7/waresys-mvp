@@ -6,9 +6,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
 
-# ============================================================
-# Parsed Vendor Invoice (new flow)
-# ============================================================
 class Invoice(Base):
     __tablename__ = "invoices"
 
@@ -16,3 +13,12 @@ class Invoice(Base):
     vendor_name: Mapped[str | None] = mapped_column(String(255))
     voucher_no: Mapped[str | None] = mapped_column(String(128))
     invoice_date: Mapped[date | None] = mapped_column(Date)
+    bill_to: Mapped[str | None] = mapped_column(Text)
+    ship_to: Mapped[str | None] = mapped_column(Text)
+    subtotal: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    cgst: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    sgst: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    igst: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    other_charges: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    total: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    raw_text: Mapped[str | None] = mapped_column(Text)
