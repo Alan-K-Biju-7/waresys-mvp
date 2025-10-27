@@ -13,3 +13,12 @@ class BillLine(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     bill_id: Mapped[int] = mapped_column(ForeignKey("bills.id", ondelete="CASCADE"), index=True)
     bill: Mapped["Bill"] = relationship(back_populates="lines")
+
+    product_id: Mapped[int | None] = mapped_column(ForeignKey("products.id"), nullable=True)
+    description_raw: Mapped[str | None] = mapped_column(Text, nullable=True)
+    qty: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True)
+    unit_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    line_total: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    ocr_confidence: Mapped[Decimal | None] = mapped_column(Numeric(4, 3), nullable=True)
+    hsn: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    uom: Mapped[str | None] = mapped_column(String(32), nullable=True)
