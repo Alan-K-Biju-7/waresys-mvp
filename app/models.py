@@ -7,16 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
 
-class Product(Base):
-    __tablename__ = "products"
+class Bill(Base):
+    __tablename__ = "bills"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    sku: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
-    name: Mapped[str] = mapped_column(String(255), index=True)
-    category: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
-    stock_qty: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True, default=0)
-    reorder_point: Mapped[Decimal | None] = mapped_column(Numeric(12, 3), nullable=True, default=0)
-
-    def __repr__(self) -> str:
-        return f"<Product id={self.id} sku={self.sku!r} name={self.name!r} stock={self.stock_qty}>"
+    bill_no: Mapped[str] = mapped_column(String(128), index=True)
+    bill_date: Mapped[date] = mapped_column(Date, nullable=False)
