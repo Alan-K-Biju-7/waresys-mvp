@@ -6,28 +6,26 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
 
-class Invoice(Base):
-    __tablename__ = "invoices"
+class InvoiceLine(Base):
+    __tablename__ = "invoice_lines"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    vendor_name: Mapped[str | None] = mapped_column(String(255))
-    voucher_no: Mapped[str | None] = mapped_column(String(128))
-    invoice_date: Mapped[date | None] = mapped_column(Date)
-    bill_to: Mapped[str | None] = mapped_column(Text)
-    ship_to: Mapped[str | None] = mapped_column(Text)
-    subtotal: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    cgst: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    sgst: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    igst: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    other_charges: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    total: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
-    raw_text: Mapped[str | None] = mapped_column(Text)
+    invoice_id: Mapped[int] = mapped_column(ForeignKey("invoices.id", ondelete="CASCADE"), index=True)
+    invoice: Mapped["Invoice"] = relationship(back_populates="lines")
+    description: Mapped[str | None] = mapped_column(Text)
+    hsn: Mapped[str | None] = mapped_column(String(16))
+    uom: Mapped[str | None] = mapped_column(String(16))
+    qty: Mapped[Decimal | None] = mapped_column(Numeric(12, 3))
+    rate: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    discount_pct: Mapped[Decimal | None] = mapped_column(Numeric(5, 2))
+    amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    sku: Mapped[str | None] = mapped_column(String(64))
 
-    lines: Mapped[list["InvoiceLine"]] = relationship(
-        back_populates="invoice",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+    __table_args__ = (
+        CheckConstraint("qty IS NULL OR qty >= 0", name="ck_invoice_lines_qty_nonneg"),
+        CheckConstraint("rate IS NULL OR rate >= 0", name="ck_invoice_lines_rate_nonneg"),
+        CheckConstraint("amount IS NULL OR amount >= 0", name="ck_invoice_lines_amount_nonneg"),
     )
 
     def __repr__(self) -> str:
-        return f"<Invoice id={self.id} vendor={self.vendor_name!r} total={self.total}>"
+        return f"<InvoiceLine id={self.id} invoice={self.invoice_id} qty={self.qty}>"
