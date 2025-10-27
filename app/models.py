@@ -8,20 +8,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .db import Base
 
 
-class Vendor(Base):
-    __tablename__ = "vendors"
+class Product(Base):
+    __tablename__ = "products"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    gst_number: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    address: Mapped[str | None] = mapped_column(Text, nullable=True)
-    contact: Mapped[str | None] = mapped_column(String(255), nullable=True)
-
-    bills: Mapped[list["Bill"]] = relationship(back_populates="vendor")
-
-    __table_args__ = (Index("ix_vendors_gst", "gst_number"),)
-
-    def __repr__(self) -> str:
-        return f"<Vendor id={self.id} name={self.name!r} gst={self.gst_number!r}>"
+    sku: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    category: Mapped[str | None] = mapped_column(String(64), nullable=True)
