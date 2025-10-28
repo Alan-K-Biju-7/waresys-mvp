@@ -65,3 +65,10 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
     if not user:
         raise cred_exc
     return user
+
+# =========================
+# Schemas for JSON login
+# =========================
+class LoginBody(BaseModel):
+    email: str
+    password: str
