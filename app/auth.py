@@ -105,3 +105,8 @@ def login_json(body: LoginBody, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     token = create_access_token({"sub": user.email})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me")
+def me(user: models.User = Depends(get_current_user)):
+    return {"id": user.id, "email": user.email, "role": user.role}
