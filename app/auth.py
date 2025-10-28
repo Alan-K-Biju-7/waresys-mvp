@@ -25,3 +25,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+# =========================
+# Hashing (matches seeder)
+# =========================
+def get_password_hash(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return hashlib.sha256(plain.encode("utf-8")).hexdigest() == hashed
