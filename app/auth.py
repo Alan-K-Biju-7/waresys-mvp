@@ -72,3 +72,18 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
 class LoginBody(BaseModel):
     email: str
     password: str
+
+# =========================
+# Routes
+# =========================
+@router.post("/register")
+def register(user: schemas.UserRegister, db: Session = Depends(get_db)):
+    existing = db.query(models.User).filter(models.User.email == user.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists")
+    hashed_pw = get_password_hash(user.password)
+    new_user = models.User(email=user.email, hashed_password=hashed_pw, role=user.role)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"msg": "User registered", "id": new_user.id}
