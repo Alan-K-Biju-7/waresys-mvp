@@ -9,8 +9,3 @@ class Settings:
         )
         self.REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/0")
         self.UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
-
-settings = Settings()
-DATABASE_URL = settings.DATABASE_URL
-REDIS_URL = settings.REDIS_URL
-UPLOAD_DIR = settings.UPLOAD_DIR
