@@ -13,3 +13,10 @@ engine = create_engine(
     pool_pre_ping=True,
     future=True,
 )
+
+# Session factory
+SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
+# Base class for models
+class Base(DeclarativeBase):
+    pass
