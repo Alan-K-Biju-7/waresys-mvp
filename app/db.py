@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import time
+from typing import Generator
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 from sqlalchemy.exc import OperationalError
 
 from .config import settings
@@ -41,3 +42,12 @@ def init_db() -> None:
 
     # Create tables if they don't exist
     Base.metadata.create_all(bind=engine)
+
+
+def get_db() -> Generator[Session, None, None]:
+    """FastAPI dependency to get a DB session."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
