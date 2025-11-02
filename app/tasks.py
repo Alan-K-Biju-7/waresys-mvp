@@ -1,6 +1,8 @@
-    db: Session = SessionLocal()
-    try:
-        bill = db.get(models.Bill, bill_id)
-        if not bill:
-            return {"bill_id": bill_id, "status": "FAILED", "reason": "Bill not found"}
-        # main logic continues...
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.exception("[task] DB error")
+    except Exception as e:
+        db.rollback()
+        logger.exception("[task] unexpected failure")
+    finally:
+        db.close()
