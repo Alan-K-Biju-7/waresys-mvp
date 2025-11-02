@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.db import SessionLocal
 from app import models, crud
 
-# ---------- Celery app ----------
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", os.getenv("REDIS_URL", "redis://redis:6379/0"))
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", os.getenv("REDIS_URL", "redis://redis:6379/0"))
+
+celery_app = Celery("waresys", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
