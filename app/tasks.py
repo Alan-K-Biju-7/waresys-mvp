@@ -14,3 +14,9 @@ celery_app = Celery("waresys", broker=CELERY_BROKER_URL, backend=CELERY_RESULT_B
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+# ---------- Prefer the unified pipeline ----------
+try:
+    from app.ocr_pipeline import process_invoice as pipeline_process  # type: ignore
+except Exception:  # pragma: no cover
+    pipeline_process = None  # type: ignore
