@@ -20,8 +20,13 @@ try:
 except Exception:
     pipeline_process = None  # type: ignore
 
-# ---------- Optional legacy/new adapters ----------
 try:
     from app.parsing import parse_invoice as legacy_parse_invoice  # type: ignore
 except Exception:
     legacy_parse_invoice = None  # type: ignore
+
+try:
+    from app.ocr_pipeline import extract_text_from_pdf, parse_invoice_text  # type: ignore
+except Exception:
+    extract_text_from_pdf = None  # type: ignore
+    parse_invoice_text = None  # type: ignore
