@@ -49,3 +49,5 @@ def _digits(s: str | None) -> int:
     return len(re.sub(r"\D", "", s or ""))
 def _looks_vendorish(name: str | None) -> bool:
     return bool(name and _POS_VENDOR_TOKENS.search(name) and not _NEG_ADDRESS_TOKENS.search(name))
+def _looks_addressish(name: str | None) -> bool:
+    return bool(name and _NEG_ADDRESS_TOKENS.search(name) and not _POS_VENDOR_TOKENS.search(name))
