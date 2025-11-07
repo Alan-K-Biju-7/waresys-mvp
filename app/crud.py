@@ -84,3 +84,15 @@ def _canonicalize_vendor_name(name: Optional[str]) -> Optional[str]:
     if not name:
         return name
     s = re.sub(r"\s+", " ", str(name)).strip(" -,/.")
+    m = _NEG_ADDRESS_TOKENS.search(s)
+    if m:
+        s = s[:m.start()].strip(" -,/.")
+    s = _DATE_TOKEN.sub("", s)
+    s = _INVOICE_CODEISH.sub("", s)
+    s = re.sub(r"\s{2,}", " ", s).strip(" -,/.")
+    if not s:
+        return None
+    titled = s.title()
+    titled = re.sub(r"(?i)\bA\s*2\s*Z\b", "A2Z", titled)
+    titled = titled.replace("Llp", "LLP").replace("Pvt", "Pvt").replace("Ltd", "Ltd")
+    return titled.strip(" -,/.")
