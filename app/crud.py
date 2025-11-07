@@ -132,3 +132,7 @@ def _upgrade_vendor_fields_if_better(vendor, *, name=None, address=None, contact
         changed = True
 
     return changed
+
+# ============================================================
+# Products
+# ============================================================
