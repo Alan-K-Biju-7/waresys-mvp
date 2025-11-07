@@ -174,3 +174,7 @@ def get_or_create_vendor(
     email: Optional[str] = None,
 ):
     """Prefer GST match else canonical name; merge or upgrade vendor."""
+    Vendor = models.Vendor
+    safe_name = _canonicalize_vendor_name(name)
+    safe_contact = _normalize_contact(contact)
+    safe_email = email.lower() if email else None
