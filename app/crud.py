@@ -96,3 +96,11 @@ def _canonicalize_vendor_name(name: Optional[str]) -> Optional[str]:
     titled = re.sub(r"(?i)\bA\s*2\s*Z\b", "A2Z", titled)
     titled = titled.replace("Llp", "LLP").replace("Pvt", "Pvt").replace("Ltd", "Ltd")
     return titled.strip(" -,/.")
+def _name_key_for_match(name: Optional[str]) -> Optional[str]:
+    if not name:
+        return None
+    s = _canonicalize_vendor_name(name) or ""
+    s = _COMPANY_SUFFIX.sub("", s)
+    s = re.sub(r"[^\w\s]", " ", s)
+    s = re.sub(r"\s+", " ", s).strip().lower()
+    return s or None
