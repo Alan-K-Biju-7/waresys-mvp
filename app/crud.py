@@ -32,3 +32,16 @@ _COMPANY_SUFFIX = re.compile(
     r"\b(PVT\.?\s*LTD\.?|LTD\.?|LLP|CO\.?|COMPANY|ENTERPRISES?|TRADERS?|INDUSTRIES)\b\.?",
     re.I,
 )
+
+# ============================================================
+# Helpers
+# ============================================================
+def _merge_field(obj, field: str, value):
+    """Set field if new value is non-empty and current value blank/N/A."""
+    if value is None:
+        return
+    if isinstance(value, str) and value.strip() == "":
+        return
+    old = getattr(obj, field, None)
+    if old in (None, "", "N/A"):
+        setattr(obj, field, value)
