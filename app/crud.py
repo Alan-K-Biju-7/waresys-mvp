@@ -51,3 +51,11 @@ def _looks_vendorish(name: str | None) -> bool:
     return bool(name and _POS_VENDOR_TOKENS.search(name) and not _NEG_ADDRESS_TOKENS.search(name))
 def _looks_addressish(name: str | None) -> bool:
     return bool(name and _NEG_ADDRESS_TOKENS.search(name) and not _POS_VENDOR_TOKENS.search(name))
+def _normalize_contact(contact: Optional[str]) -> Optional[str]:
+    """
+    Normalize Indian phone numbers to +91XXXXXXXXXX.
+    Accepts '04802731800, 9544499430' or '+91 95444 99430'.
+    """
+    if not contact:
+        return contact
+    raw = str(contact)
