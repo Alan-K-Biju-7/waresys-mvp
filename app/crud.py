@@ -25,3 +25,6 @@ _NEG_ADDRESS_TOKENS = re.compile(
     r"(GROUND|FLOOR|BLDG|BUILDING|ASSOCIATION|MERCHANTS|NEAR|BANK|ROAD|STREET|LANE|POST|PO\b|PIN|STATE|KERALA|EMAIL|PHONE)",
     re.I,
 )
+_MONTH_TOKEN = re.compile(r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b", re.I)
+_INVOICE_CODEISH = re.compile(r"\b[A-Z0-9]{2,}(?:[\/\-][A-Z0-9]{1,}){1,}\b", re.I)
+_DATE_TOKEN = re.compile(r"([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{2}[-/][0-9]{2}[-/][0-9]{2,4})")
