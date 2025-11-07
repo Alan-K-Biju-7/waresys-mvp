@@ -145,3 +145,11 @@ def search_products_by_name(db: Session, q: str, limit: int = 25):
         .scalars()
         .all()
     )
+def create_product(db: Session, **data):
+    if data.get("category_id") in (0, "0", ""):
+        data["category_id"] = None
+    obj = models.Product(**data)
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
