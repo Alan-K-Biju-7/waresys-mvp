@@ -59,3 +59,21 @@ def _normalize_contact(contact: Optional[str]) -> Optional[str]:
     if not contact:
         return contact
     raw = str(contact)
+    cand = re.findall(r"(?:\+91[\-\s]?)?\d{10}|\b\d{3,5}[-\s]?\d{6,8}\b", raw)
+    uniq: List[str] = []
+    seen = set()
+    for c in cand:
+        d = re.sub(r"\D", "", c)
+        if d.startswith("91") and len(d) >= 12:
+            d = d[-10:]
+        elif len(d) > 10:
+            d = d[-10:]
+        if len(d) == 10:
+            norm = f"+91{d}"
+        else:
+            norm = f"+{d}" if not d.startswith("0") else d
+        key = re.sub(r"\D", "", norm)[-10:]
+        if key and key not in seen:
+            uniq.append(norm)
+            seen.add(key)
+    return ", ".join(uniq) if uniq else None
