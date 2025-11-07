@@ -165,3 +165,12 @@ def _find_vendor_by_canonical_name(db: Session, name: Optional[str]):
         if _name_key_for_match(v.name) == key:
             return v
     return None
+def get_or_create_vendor(
+    db: Session,
+    name: Optional[str],
+    gst_number: Optional[str] = None,
+    address: Optional[str] = None,
+    contact: Optional[str] = None,
+    email: Optional[str] = None,
+):
+    """Prefer GST match else canonical name; merge or upgrade vendor."""
