@@ -104,3 +104,8 @@ def _name_key_for_match(name: Optional[str]) -> Optional[str]:
     s = re.sub(r"[^\w\s]", " ", s)
     s = re.sub(r"\s+", " ", s).strip().lower()
     return s or None
+def _upgrade_vendor_fields_if_better(vendor, *, name=None, address=None, contact=None, email=None) -> bool:
+    """
+    Upgrade weak vendor entries when stronger info is found (same GST or name).
+    """
+    changed = False
