@@ -136,3 +136,5 @@ def _upgrade_vendor_fields_if_better(vendor, *, name=None, address=None, contact
 # ============================================================
 # Products
 # ============================================================
+def get_product_by_sku(db: Session, sku: str):
+    return db.execute(select(models.Product).where(models.Product.sku == sku)).scalar_one_or_none()
