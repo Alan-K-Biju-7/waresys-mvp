@@ -77,3 +77,10 @@ def _normalize_contact(contact: Optional[str]) -> Optional[str]:
             uniq.append(norm)
             seen.add(key)
     return ", ".join(uniq) if uniq else None
+def _canonicalize_vendor_name(name: Optional[str]) -> Optional[str]:
+    """
+    Clean vendor names: remove address tails, dates, codes, and title-case.
+    """
+    if not name:
+        return name
+    s = re.sub(r"\s+", " ", str(name)).strip(" -,/.")
