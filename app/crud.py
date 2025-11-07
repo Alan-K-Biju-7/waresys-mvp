@@ -109,3 +109,26 @@ def _upgrade_vendor_fields_if_better(vendor, *, name=None, address=None, contact
     Upgrade weak vendor entries when stronger info is found (same GST or name).
     """
     changed = False
+    if name and _looks_vendorish(name):
+        current = getattr(vendor, "name", "") or ""
+        if current in ("", "N/A") or _looks_addressish(current) or len(name) > len(current):
+            if _name_key_for_match(name) != _name_key_for_match(current):
+                vendor.name = _canonicalize_vendor_name(name)
+                changed = True
+
+    if contact:
+        new_c = _normalize_contact(contact) or ""
+        old_c = _normalize_contact(getattr(vendor, "contact", "")) or ""
+        if _digits(new_c) > _digits(old_c):
+            vendor.contact = new_c
+            changed = True
+
+    if address and (not getattr(vendor, "address", None) or len(address) > len(getattr(vendor, "address", ""))):
+        vendor.address = address
+        changed = True
+
+    if email and not getattr(vendor, "email", None):
+        vendor.email = email.lower()
+        changed = True
+
+    return changed
