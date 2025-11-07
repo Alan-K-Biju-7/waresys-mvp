@@ -45,3 +45,5 @@ def _merge_field(obj, field: str, value):
     old = getattr(obj, field, None)
     if old in (None, "", "N/A"):
         setattr(obj, field, value)
+def _digits(s: str | None) -> int:
+    return len(re.sub(r"\D", "", s or ""))
