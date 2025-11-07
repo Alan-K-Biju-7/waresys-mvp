@@ -153,3 +153,15 @@ def create_product(db: Session, **data):
     db.commit()
     db.refresh(obj)
     return obj
+def _find_vendor_by_canonical_name(db: Session, name: Optional[str]):
+    """Find vendor by canonicalized name."""
+    if not name:
+        return None
+    key = _name_key_for_match(name)
+    if not key:
+        return None
+    rows = db.execute(select(models.Vendor).limit(200)).scalars().all()
+    for v in rows:
+        if _name_key_for_match(v.name) == key:
+            return v
+    return None
