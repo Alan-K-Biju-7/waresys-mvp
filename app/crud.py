@@ -47,3 +47,5 @@ def _merge_field(obj, field: str, value):
         setattr(obj, field, value)
 def _digits(s: str | None) -> int:
     return len(re.sub(r"\D", "", s or ""))
+def _looks_vendorish(name: str | None) -> bool:
+    return bool(name and _POS_VENDOR_TOKENS.search(name) and not _NEG_ADDRESS_TOKENS.search(name))
