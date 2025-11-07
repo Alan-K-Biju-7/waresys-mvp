@@ -28,3 +28,7 @@ _NEG_ADDRESS_TOKENS = re.compile(
 _MONTH_TOKEN = re.compile(r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b", re.I)
 _INVOICE_CODEISH = re.compile(r"\b[A-Z0-9]{2,}(?:[\/\-][A-Z0-9]{1,}){1,}\b", re.I)
 _DATE_TOKEN = re.compile(r"([0-9]{1,2}[-/][A-Za-z]{3}[-/][0-9]{2,4}|[0-9]{2}[-/][0-9]{2}[-/][0-9]{2,4})")
+_COMPANY_SUFFIX = re.compile(
+    r"\b(PVT\.?\s*LTD\.?|LTD\.?|LLP|CO\.?|COMPANY|ENTERPRISES?|TRADERS?|INDUSTRIES)\b\.?",
+    re.I,
+)
