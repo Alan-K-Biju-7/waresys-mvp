@@ -229,3 +229,14 @@ def attach_vendor_to_bill(db: Session, bill: models.Bill, vendor_info: dict | No
     )
     bill.vendor_id = v.id
     return bill
+def create_vendor(db: Session, vendor: schemas.VendorCreate):
+    vendor_dict = vendor.dict()
+    vendor_dict["name"] = _canonicalize_vendor_name(vendor_dict.get("name"))
+    vendor_dict["contact"] = _normalize_contact(vendor_dict.get("contact"))
+    if vendor_dict.get("email"):
+        vendor_dict["email"] = vendor_dict["email"].lower()
+    db_vendor = models.Vendor(**vendor_dict)
+    db.add(db_vendor)
+    db.commit()
+    db.refresh(db_vendor)
+    return db_vendor
