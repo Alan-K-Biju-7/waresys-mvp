@@ -184,3 +184,23 @@ def get_or_create_vendor(
 
     if v is None and safe_name:
         v = _find_vendor_by_canonical_name(db, safe_name)
+    if v:
+        if safe_name and _looks_vendorish(safe_name):
+            _merge_field(v, "name", safe_name)
+        _merge_field(v, "gst_number", gst_number)
+        _merge_field(v, "address", address)
+        if safe_contact:
+            old = _normalize_contact(getattr(v, "contact", ""))
+            if _digits(safe_contact) > _digits(old or ""):
+                v.contact = safe_contact
+        if safe_email and not getattr(v, "email", None):
+            v.email = safe_email
+
+        if (gst_number and v.gst_number == gst_number) or (
+            safe_name and _name_key_for_match(v.name) == _name_key_for_match(safe_name)
+        ):
+            if _upgrade_vendor_fields_if_better(
+                v, name=safe_name, address=address, contact=safe_contact, email=safe_email
+            ):
+                db.flush()
+        return v
