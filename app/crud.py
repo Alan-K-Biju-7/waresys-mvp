@@ -240,3 +240,8 @@ def create_vendor(db: Session, vendor: schemas.VendorCreate):
     db.commit()
     db.refresh(db_vendor)
     return db_vendor
+def get_vendors(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Vendor).offset(skip).limit(limit).all()
+
+def get_vendor(db: Session, vendor_id: int):
+    return db.query(models.Vendor).filter(models.Vendor.id == vendor_id).first()
