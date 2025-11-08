@@ -245,3 +245,13 @@ def get_vendors(db: Session, skip: int = 0, limit: int = 100):
 
 def get_vendor(db: Session, vendor_id: int):
     return db.query(models.Vendor).filter(models.Vendor.id == vendor_id).first()
+def _parse_bill_date(value) -> date:
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%d-%m-%y"):
+            try:
+                return datetime.strptime(value, fmt).date()
+            except ValueError:
+                continue
+    return date.today()
