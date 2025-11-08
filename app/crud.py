@@ -269,3 +269,10 @@ def _create_bill_row(db: Session, data: dict, vendor_id: Optional[int]) -> model
     db.commit()
     db.refresh(bill)
     return bill
+def create_bill(db: Session, bill_in: schemas.BillCreate, allow_update: bool = False):
+    """
+    Duplicate behavior is controlled by DUP_POLICY:
+      - reuse  : return existing bill object
+      - suffix : create new bill with suffixed number
+      - error  : raise duplicate
+    """
