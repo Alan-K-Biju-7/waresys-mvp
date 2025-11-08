@@ -204,3 +204,14 @@ def get_or_create_vendor(
             ):
                 db.flush()
         return v
+    create_name = safe_name if _looks_vendorish(safe_name) else "Unknown Vendor"
+    v = Vendor(
+        name=create_name,
+        gst_number=gst_number,
+        address=address,
+        contact=safe_contact,
+        email=safe_email,
+    )
+    db.add(v)
+    db.flush()
+    return v
