@@ -255,3 +255,17 @@ def _parse_bill_date(value) -> date:
             except ValueError:
                 continue
     return date.today()
+def _create_bill_row(db: Session, data: dict, vendor_id: Optional[int]) -> models.Bill:
+    bill = models.Bill(
+        bill_no=data["bill_no"],
+        bill_date=_parse_bill_date(data.get("bill_date")),
+        party_name=data.get("party_name"),
+        status=data.get("status") or "PENDING",
+        source=data.get("source") or "OCR",
+        uploaded_doc=data.get("uploaded_doc"),
+        vendor_id=vendor_id,
+    )
+    db.add(bill)
+    db.commit()
+    db.refresh(bill)
+    return bill
