@@ -178,3 +178,9 @@ def get_or_create_vendor(
     safe_name = _canonicalize_vendor_name(name)
     safe_contact = _normalize_contact(contact)
     safe_email = email.lower() if email else None
+    v = None
+    if gst_number:
+        v = db.execute(select(Vendor).where(Vendor.gst_number == gst_number)).scalars().first()
+
+    if v is None and safe_name:
+        v = _find_vendor_by_canonical_name(db, safe_name)
