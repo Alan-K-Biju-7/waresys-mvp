@@ -215,3 +215,17 @@ def get_or_create_vendor(
     db.add(v)
     db.flush()
     return v
+
+def attach_vendor_to_bill(db: Session, bill: models.Bill, vendor_info: dict | None):
+    if not vendor_info:
+        return bill
+    v = get_or_create_vendor(
+        db,
+        name=vendor_info.get("name"),
+        gst_number=vendor_info.get("gst_number"),
+        address=vendor_info.get("address"),
+        contact=vendor_info.get("contact"),
+        email=vendor_info.get("email"),
+    )
+    bill.vendor_id = v.id
+    return bill
