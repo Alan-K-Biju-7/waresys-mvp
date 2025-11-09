@@ -276,3 +276,28 @@ def create_bill(db: Session, bill_in: schemas.BillCreate, allow_update: bool = F
       - suffix : create new bill with suffixed number
       - error  : raise duplicate
     """
+    data = bill_in.dict()
+    data.pop("bill_type", None)
+    data["bill_date"] = _parse_bill_date(data.get("bill_date"))
+
+    existing = (
+        db.query(models.Bill)
+        .filter(models.Bill.party_name == data.get("party_name"), models.Bill.bill_no == data["bill_no"])
+        .first()
+    )
+
+    vendor_id = None
+
+    if existing and not allow_update:
+        if DUP_POLICY == "reuse":
+            return {"created": False, "duplicate": False, "message": "Duplicate reused", "bill": existing}
+        if DUP_POLICY == "suffix":
+            count = (
+                db.query(models.Bill)
+                .filter(models.Bill.party_name == data.get("party_name"), models.Bill.bill_no.like(f"{data['bill_no']}%"))
+                .count()
+            )
+            new_no = f"{data['bill_no']}-DUP-{count + 1}"
+            bill = _create_bill_row(db, dict(data, bill_no=new_no), vendor_id)
+            return {"created": True, "duplicate": False, "message": f"Duplicate created as {new_no}", "bill": bill}
+        return {"duplicate": True, "message": "Duplicate bill exists", "bill": existing}
