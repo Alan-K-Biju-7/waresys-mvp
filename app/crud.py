@@ -339,3 +339,16 @@ def upsert_review_item(db: Session, *, bill_id: int, issues: str):
 
 def get_reviews(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.ReviewQueue).filter(models.ReviewQueue.status == "OPEN").offset(skip).limit(limit).all()
+def get_review(db: Session, review_id: int):
+    return db.query(models.ReviewQueue).filter(models.ReviewQueue.id == review_id).first()
+
+def resolve_review(db: Session, review_id: int, notes: Optional[str] = None):
+    review = db.query(models.ReviewQueue).filter(models.ReviewQueue.id == review_id).first()
+    if not review:
+        return None
+    review.status = "RESOLVED"
+    if notes:
+        review.issues = (review.issues or "") + f" | Resolved Notes: {notes}"
+    db.commit()
+    db.refresh(review)
+    return review
