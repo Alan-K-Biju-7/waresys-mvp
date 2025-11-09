@@ -364,3 +364,34 @@ def add_ledger(db: Session, product_id: int, qty_change: float, txn_type: str, r
     db.commit()
     db.refresh(row)
     return row
+def create_invoice_with_lines(db: Session, inv: dict) -> models.Invoice:
+    invoice = models.Invoice(
+        vendor_name=_canonicalize_vendor_name(inv.get("vendor_name")),
+        voucher_no=inv.get("voucher_no"),
+        invoice_date=inv.get("invoice_date"),
+        bill_to=inv.get("bill_to"),
+        ship_to=inv.get("ship_to"),
+        subtotal=inv.get("subtotal"),
+        cgst=inv.get("cgst"),
+        sgst=inv.get("sgst"),
+        igst=inv.get("igst"),
+        other_charges=inv.get("other_charges"),
+        total=inv.get("total"),
+        raw_text=inv.get("raw_text"),
+    )
+    for ln in inv.get("lines", []):
+        invoice.lines.append(
+            models.InvoiceLine(
+                description=ln.get("description"),
+                hsn=ln.get("hsn"),
+                uom=ln.get("uom"),
+                qty=ln.get("qty"),
+                rate=ln.get("rate"),
+                discount_pct=ln.get("discount_pct"),
+                amount=ln.get("amount"),
+                sku=ln.get("sku"),
+            )
+        )
+    db.add(invoice)
+    db.flush()
+    return invoice
