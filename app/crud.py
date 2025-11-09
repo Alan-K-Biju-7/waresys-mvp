@@ -352,3 +352,15 @@ def resolve_review(db: Session, review_id: int, notes: Optional[str] = None):
     db.commit()
     db.refresh(review)
     return review
+def add_ledger(db: Session, product_id: int, qty_change: float, txn_type: str, ref_bill_id: int | None, notes: str | None = None):
+    row = models.StockLedger(
+        product_id=product_id,
+        qty_change=qty_change,
+        txn_type=txn_type,
+        ref_bill_id=ref_bill_id,
+        notes=notes,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
