@@ -322,3 +322,20 @@ def add_bill_line(db: Session, **data):
     db.commit()
     db.refresh(l)
     return l
+def add_review(db: Session, bill_id: int, issues: Optional[str] = None):
+    review = models.ReviewQueue(bill_id=bill_id, status="OPEN", issues=issues or "Requires manual review")
+    db.add(review)
+    db.commit()
+    db.refresh(review)
+    return review
+
+def upsert_review_item(db: Session, *, bill_id: int, issues: str):
+    existing = db.query(models.ReviewQueue).filter_by(bill_id=bill_id, status="OPEN").first()
+    if existing:
+        existing.issues = issues
+    else:
+        db.add(models.ReviewQueue(bill_id=bill_id, issues=issues, status="OPEN"))
+    db.commit()
+
+def get_reviews(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.ReviewQueue).filter(models.ReviewQueue.status == "OPEN").offset(skip).limit(limit).all()
