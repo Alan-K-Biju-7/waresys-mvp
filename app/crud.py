@@ -395,3 +395,23 @@ def create_invoice_with_lines(db: Session, inv: dict) -> models.Invoice:
     db.add(invoice)
     db.flush()
     return invoice
+def upsert_product_and_add_stock(db: Session, desc: str, hsn: str | None, qty):
+    prod = db.query(models.Product).filter(models.Product.name.ilike(desc)).first()
+    if not prod:
+        base = (desc or "SKU").upper().replace(" ", "-")[:10]
+        prod = models.Product(
+            sku=f"AUTO-{abs(hash(base)) % 10_000_000}",
+            name=desc,
+            category=None,
+            stock_qty=0,
+        )
+        db.add(prod)
+        db.flush()
+    prod.stock_qty = (prod.stock_qty or 0) + (qty or 0)
+    return prod
+
+def apply_stock_from_invoice(db: Session, invoice: models.Invoice):
+    for line in invoice.lines:
+        if (line.qty or 0) > 0:
+            upsert_product_and_add_stock(db, line.description, line.hsn, line.qty)
+    db.commit()
