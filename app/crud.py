@@ -301,3 +301,16 @@ def create_bill(db: Session, bill_in: schemas.BillCreate, allow_update: bool = F
             bill = _create_bill_row(db, dict(data, bill_no=new_no), vendor_id)
             return {"created": True, "duplicate": False, "message": f"Duplicate created as {new_no}", "bill": bill}
         return {"duplicate": True, "message": "Duplicate bill exists", "bill": existing}
+    if existing and allow_update:
+        if data.get("uploaded_doc"):
+            existing.uploaded_doc = data["uploaded_doc"]
+        if data.get("bill_date"):
+            existing.bill_date = data["bill_date"]
+        if data.get("party_name"):
+            existing.party_name = data["party_name"]
+        if vendor_id:
+            existing.vendor_id = vendor_id
+        db.add(existing)
+        db.commit()
+        db.refresh(existing)
+        return {"created": False, "duplicate": False, "message": "Updated existing bill", "bill": existing}
