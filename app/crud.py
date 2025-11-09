@@ -316,3 +316,9 @@ def create_bill(db: Session, bill_in: schemas.BillCreate, allow_update: bool = F
         return {"created": False, "duplicate": False, "message": "Updated existing bill", "bill": existing}
     bill = _create_bill_row(db, data, vendor_id)
     return {"bill": bill, "created": True, "duplicate": False, "message": "Bill created"}
+def add_bill_line(db: Session, **data):
+    l = models.BillLine(**data)
+    db.add(l)
+    db.commit()
+    db.refresh(l)
+    return l
