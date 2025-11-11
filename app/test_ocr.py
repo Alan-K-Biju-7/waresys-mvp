@@ -11,3 +11,5 @@ pdf_file = sys.argv[1]
 if not os.path.exists(pdf_file):
     print(f"⚠️ File not found: {pdf_file}")
     sys.exit(1)
+
+pages = convert_from_path(pdf_file, dpi=150)
