@@ -13,3 +13,7 @@ if not os.path.exists(pdf_file):
     sys.exit(1)
 
 pages = convert_from_path(pdf_file, dpi=150)
+
+for i, page in enumerate(pages):
+    text = pytesseract.image_to_string(page)
+    print(f"\n--- Page {i+1} ---\n{text.strip()}\n")
