@@ -438,3 +438,14 @@ def list_products(q: str | None = None, db: Session = Depends(get_db)):
     if q:
         return crud.search_products_by_name(db, q)
     return db.query(models.Product).limit(100).all()
+@app.post("/bills/ocr", response_model=schemas.OCRResult)
+def upload_invoice(
+    file: UploadFile = File(...),
+    party_name: str | None = Form(None),
+    bill_no: str | None = Form(None),
+    bill_date: str | None = Form(None),
+    db: Session = Depends(get_db)
+):
+    dest_path = os.path.join(settings.UPLOAD_DIR, file.filename)
+    with open(dest_path, "wb") as f:
+        f.write(file.file.read())
