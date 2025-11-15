@@ -403,3 +403,16 @@ from .tasks import celery_app
 from .stock import confirm_bill
 from datetime import date
 from app.presentation_adapter import router as presentation_router
+app = FastAPI(title="Waresys MVP", version="1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(presentation_router)
+
+logger = logging.getLogger(__name__)
