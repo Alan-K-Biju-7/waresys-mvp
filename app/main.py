@@ -433,3 +433,8 @@ def root():
 @app.post("/products", response_model=schemas.ProductOut)
 def create_product(p: schemas.ProductIn, db: Session = Depends(get_db)):
     return crud.create_product(db, **p.model_dump())
+@app.get("/products", response_model=List[schemas.ProductOut])
+def list_products(q: str | None = None, db: Session = Depends(get_db)):
+    if q:
+        return crud.search_products_by_name(db, q)
+    return db.query(models.Product).limit(100).all()
