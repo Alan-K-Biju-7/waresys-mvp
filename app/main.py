@@ -416,3 +416,14 @@ app.add_middleware(
 app.include_router(presentation_router)
 
 logger = logging.getLogger(__name__)
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.on_event("startup")
+def _startup():
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    init_db()
