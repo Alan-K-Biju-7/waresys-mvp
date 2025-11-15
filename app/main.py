@@ -430,3 +430,6 @@ def _startup():
 @app.get("/")
 def root():
     return {"ok": True, "docs": "/docs"}
+@app.post("/products", response_model=schemas.ProductOut)
+def create_product(p: schemas.ProductIn, db: Session = Depends(get_db)):
+    return crud.create_product(db, **p.model_dump())
