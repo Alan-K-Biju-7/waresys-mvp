@@ -427,3 +427,6 @@ def get_db():
 def _startup():
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     init_db()
+@app.get("/")
+def root():
+    return {"ok": True, "docs": "/docs"}
