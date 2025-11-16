@@ -476,3 +476,15 @@ def upload_invoice(
         needs_review=False,
         message="Invoice accepted. Parsing in background. Poll /bills/{id}."
     )
+@app.put("/bills/{bill_id}", response_model=schemas.OCRResult)
+def update_bill(
+    bill_id: int,
+    file: UploadFile = File(...),
+    party_name: str | None = Form(None),
+    bill_no: str | None = Form(None),
+    bill_date: str | None = Form(None),
+    db: Session = Depends(get_db)
+):
+    dest_path = os.path.join(settings.UPLOAD_DIR, file.filename)
+    with open(dest_path, "wb") as f:
+        f.write(file.file.read())
