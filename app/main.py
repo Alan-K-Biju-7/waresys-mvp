@@ -497,3 +497,6 @@ def update_bill(
         status="PENDING",
         uploaded_doc=dest_path
     )
+    result = crud.create_bill(db, bill_in, allow_update=True)
+    bill = result["bill"]
+    celery_app.send_task("process_invoice", args=[bill.id, dest_path])
