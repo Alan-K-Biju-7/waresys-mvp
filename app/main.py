@@ -449,3 +449,12 @@ def upload_invoice(
     dest_path = os.path.join(settings.UPLOAD_DIR, file.filename)
     with open(dest_path, "wb") as f:
         f.write(file.file.read())
+    bill_in = schemas.BillCreate(
+        bill_type="PURCHASE",
+        party_name=party_name,
+        bill_no=bill_no or file.filename,
+        bill_date=bill_date or str(date.today()),
+        source="OCR",
+        status="PENDING",
+        uploaded_doc=dest_path
+    )
