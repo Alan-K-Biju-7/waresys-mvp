@@ -458,3 +458,12 @@ def upload_invoice(
         status="PENDING",
         uploaded_doc=dest_path
     )
+    result = crud.create_bill(db, bill_in)
+
+    if result.get("duplicate"):
+        raise HTTPException(status_code=409, detail=result["message"])
+
+    bill = result["bill"]
+
+    if result.get("created"):
+        celery_app.send_task("process_invoice", args=[bill.id, dest_path])
