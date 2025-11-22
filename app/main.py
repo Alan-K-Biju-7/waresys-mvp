@@ -544,3 +544,6 @@ def integrity_error_handler(request, exc: IntegrityError):
         status_code=400,
         content={"ok": False, "error": "DB_ERROR", "detail": "Database integrity error."}
     )
+@app.post("/vendors", response_model=schemas.VendorOut)
+def create_vendor(v: schemas.VendorCreate, db: Session = Depends(get_db)):
+    return crud.create_vendor(db, v)
