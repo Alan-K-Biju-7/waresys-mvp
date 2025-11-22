@@ -509,3 +509,14 @@ def update_bill(
         needs_review=False,
         message="Invoice updated. Parsing in background. Poll /bills/{id}."
     )
+@app.get("/bills/{bill_id}", response_model=schemas.BillOut)
+def get_bill(bill_id: int, db: Session = Depends(get_db)):
+    bill = db.get(models.Bill, bill_id)
+    if not bill:
+        raise HTTPException(404, "Bill not found")
+
+    bill.lines = db.query(models.BillLine).filter_by(bill_id=bill_id).all()
+    review = db.query(models.ReviewQueue).filter_by(bill_id=bill_id, status="OPEN").first()
+    bill.needs_review = bool(review)
+
+    return bill
