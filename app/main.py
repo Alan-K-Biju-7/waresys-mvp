@@ -500,3 +500,12 @@ def update_bill(
     result = crud.create_bill(db, bill_in, allow_update=True)
     bill = result["bill"]
     celery_app.send_task("process_invoice", args=[bill.id, dest_path])
+    return schemas.OCRResult(
+        bill_id=bill.id,
+        party_name=party_name,
+        bill_no=bill_no,
+        bill_date=bill_date,
+        lines=[],
+        needs_review=False,
+        message="Invoice updated. Parsing in background. Poll /bills/{id}."
+    )
