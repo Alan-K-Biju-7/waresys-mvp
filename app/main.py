@@ -547,3 +547,6 @@ def integrity_error_handler(request, exc: IntegrityError):
 @app.post("/vendors", response_model=schemas.VendorOut)
 def create_vendor(v: schemas.VendorCreate, db: Session = Depends(get_db)):
     return crud.create_vendor(db, v)
+@app.get("/vendors", response_model=List[schemas.VendorOut])
+def list_vendors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return crud.get_vendors(db, skip=skip, limit=limit)
