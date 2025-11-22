@@ -527,3 +527,6 @@ def confirm(bill_id: int, req: schemas.ConfirmRequest, db: Session = Depends(get
         raise HTTPException(400, "Resolve review items before confirming")
     confirm_bill(db, bill_id=bill_id, bill_type=req.bill_type.upper())
     return {"ok": True, "bill_id": bill_id, "status": "CONFIRMED"}
+@app.get("/stock/low")
+def low_stock(db: Session = Depends(get_db)):
+    return crud.low_stock(db)
