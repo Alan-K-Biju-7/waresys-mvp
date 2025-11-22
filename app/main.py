@@ -520,3 +520,10 @@ def get_bill(bill_id: int, db: Session = Depends(get_db)):
     bill.needs_review = bool(review)
 
     return bill
+@app.post("/bills/{bill_id}/confirm")
+def confirm(bill_id: int, req: schemas.ConfirmRequest, db: Session = Depends(get_db)):
+    review = db.query(models.ReviewQueue).filter_by(bill_id=bill_id, status="OPEN").first()
+    if review:
+        raise HTTPException(400, "Resolve review items before confirming")
+    confirm_bill(db, bill_id=bill_id, bill_type=req.bill_type.upper())
+    return {"ok": True, "bill_id": bill_id, "status": "CONFIRMED"}
