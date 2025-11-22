@@ -530,3 +530,17 @@ def confirm(bill_id: int, req: schemas.ConfirmRequest, db: Session = Depends(get
 @app.get("/stock/low")
 def low_stock(db: Session = Depends(get_db)):
     return crud.low_stock(db)
+@app.exception_handler(IntegrityError)
+def integrity_error_handler(request, exc: IntegrityError):
+    logger.error(f"IntegrityError at {request.url}: {exc}")
+
+    if "uq_party_billno" in str(exc.orig):
+        return JSONResponse(
+            status_code=409,
+            content={"ok": False, "error": "DUPLICATE_BILL", "detail": "Bill with this party and bill number already exists."}
+        )
+
+    return JSONResponse(
+        status_code=400,
+        content={"ok": False, "error": "DB_ERROR", "detail": "Database integrity error."}
+    )
