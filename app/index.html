@@ -36,37 +36,25 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- One-time API base locker -->
+       <!-- Fixed API base for local Docker demo -->
+        <!-- Fixed API base for local Docker demo -->
     <script>
-      (async function lockApiBase() {
+      (function lockApiBase() {
         const KEY = "WARESYS_API";
         const LOCK = "WARESYS_API_LOCKED";
-        if (sessionStorage.getItem(LOCK) === "2") return;
 
-        const stored = (localStorage.getItem(KEY) || "").replace(/\/+$/, "");
-        const probes = stored ? [stored] : [window.location.origin, "http://localhost:8000"];
+        // For your Docker setup, the FastAPI backend is always on port 8000
+        const base = "http://localhost:8000";
 
-        for (const base of probes) {
-          try {
-            const u = base.replace(/\/+$/, "") + "/api/health";
-            const r = await fetch(u, { mode: "cors", cache: "no-store" });
-            if (r.ok) {
-              if (stored !== base) {
-                localStorage.setItem(KEY, base.replace(/\/+$/, ""));
-                if (!sessionStorage.getItem(LOCK)) {
-                  sessionStorage.setItem(LOCK, "1");
-                  location.reload(); // one-time bind to API
-                  return;
-                }
-              }
-              sessionStorage.setItem(LOCK, "2");
-              return;
-            }
-          } catch {}
+        try {
+          localStorage.setItem(KEY, base);
+          sessionStorage.setItem(LOCK, "2");
+        } catch (e) {
+          // ignore storage errors (e.g., private mode)
         }
-        if (!stored) localStorage.setItem(KEY, "http://localhost:8000");
-        sessionStorage.setItem(LOCK, "2");
       })();
     </script>
+
 
     <script type="text/babel">
       // ---------------- libs & React hooks

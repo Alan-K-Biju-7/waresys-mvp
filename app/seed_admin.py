@@ -1,20 +1,30 @@
-from sqlalchemy import text
-from app.db import engine, SessionLocal
-from app.auth import get_password_hash
+# app/seed_admin.py
+from sqlalchemy import select
+from app.db import SessionLocal
 from app import models
+from app.auth import get_password_hash
 
-def reset_and_seed():
-    with engine.begin() as conn:
-        conn.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE;"))
+ADMIN_EMAIL = "admin@waresys.app"
+ADMIN_PASSWORD = "admin123"
 
+def ensure_admin() -> None:
     db = SessionLocal()
     try:
-        hashed_pw = get_password_hash("admin123")
-        admin = models.User(email="admin@waresys.app", hashed_password=hashed_pw, role="admin")
-        db.add(admin); db.commit()
-        print("✅ Admin user created: admin@waresys.app / admin123")
+        existing = db.execute(
+            select(models.User).where(models.User.email == ADMIN_EMAIL)
+        ).scalar_one_or_none()
+
+        if existing:
+            print(f"✅ Admin user already exists: {ADMIN_EMAIL}")
+            return
+
+        admin = models.User(
+            email=ADMIN_EMAIL,
+            hashed_password=get_password_hash(ADMIN_PASSWORD),
+            role="admin",
+        )
+        db.add(admin)
+        db.commit()
+        print(f"✅ Admin user created: {ADMIN_EMAIL} / {ADMIN_PASSWORD}")
     finally:
         db.close()
-
-if __name__ == "__main__":
-    reset_and_seed()

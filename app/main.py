@@ -3,7 +3,7 @@ import os
 import logging
 from datetime import date
 from app.auth import router as auth_router
-
+from app.seed_admin import ensure_admin
 
 from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -57,6 +57,7 @@ def get_db():
 def _startup():
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     init_db()
+    ensure_admin()
 
 @app.get("/")
 def root():
