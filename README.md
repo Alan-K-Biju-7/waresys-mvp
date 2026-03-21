@@ -154,8 +154,17 @@ Dashboard Reporting
 **Dashboard**
 <img width="2512" height="1416" alt="Screenshot 2025-10-15 205443" src="https://github.com/user-attachments/assets/ef06ffd2-5c8f-460e-8834-b207ee06f952" />
 
+**Invoice upload**
+<img width="2516" height="1408" alt="Screenshot 2025-10-15 205747" src="https://github.com/user-attachments/assets/c45d5099-c777-4776-acd6-55b2bb8df96a" />
 
+**Categories**
+<img width="2531" height="1406" alt="Screenshot 2025-10-15 205806" src="https://github.com/user-attachments/assets/48624844-ba1e-4f3a-a769-594ec80dddce" />
 
+**Stock**
+<img width="2517" height="1397" alt="Screenshot 2025-10-15 205816" src="https://github.com/user-attachments/assets/ed3236c6-e6d0-4ea4-9db6-44f391127d3e" />
+
+**Notifications and alerts**
+<img width="558" height="600" alt="Screenshot 2025-10-15 205824" src="https://github.com/user-attachments/assets/a34eff15-22ce-4e5c-baa0-f7e0aa907e0a" />
 
 ---
 
