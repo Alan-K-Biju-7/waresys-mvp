@@ -149,6 +149,13 @@ Inventory Update
         ↓
 Dashboard Reporting
 ```
+## Screenshots
+
+**Dashboard**
+<img width="2512" height="1416" alt="Screenshot 2025-10-15 205443" src="https://github.com/user-attachments/assets/ef06ffd2-5c8f-460e-8834-b207ee06f952" />
+
+
+
 
 ---
 
