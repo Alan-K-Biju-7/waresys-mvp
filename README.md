@@ -164,29 +164,15 @@ Dashboard Reporting
 <img width="2517" height="1397" alt="Screenshot 2025-10-15 205816" src="https://github.com/user-attachments/assets/ed3236c6-e6d0-4ea4-9db6-44f391127d3e" />
 
 **Notifications and alerts**
+
 <img width="558" height="600" alt="Screenshot 2025-10-15 205824" src="https://github.com/user-attachments/assets/a34eff15-22ce-4e5c-baa0-f7e0aa907e0a" />
 
 ---
 
 ## 🏗️ System Architecture
 
-```
-┌────────────────────────────┐
-│        Frontend UI         │
-│  (React-based Dashboard)   │
-└────────────┬───────────────┘
-             │
-┌────────────▼───────────────┐
-│      FastAPI Backend       │
-│  (Business Logic & APIs)   │
-└────────────┬───────────────┘
-             │
- ┌───────────┼───────────────┐
- │           │               │
-▼           ▼               ▼
-Celery     PostgreSQL       Redis
-(Task Queue) (Database) (Cache/Broker)
-```
+<img width="1631" height="1248" alt="image" src="https://github.com/user-attachments/assets/36a90484-2186-4698-9692-2ce10d85d679" />
+
 ---
 ## ⚙️ Deployment and Setup Instructions
 
