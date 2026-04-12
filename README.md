@@ -232,10 +232,10 @@ Generated automatically during initialization:
 
 ## Future Improvements
 
--PO and GRN matching for advanced invoice verification.
--AI demand forecasting for smart stock replenishment.
--Automated exception handling and approval routing.
--Multi-warehouse support with supplier analytic
+1. PO and GRN matching for advanced invoice verification.
+2. AI demand forecasting for smart stock replenishment.
+3. Automated exception handling and approval routing.
+4. Multi-warehouse support with supplier analytic
 
 ---
 
