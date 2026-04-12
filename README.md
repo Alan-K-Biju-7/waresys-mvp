@@ -230,6 +230,15 @@ Generated automatically during initialization:
 
 ---
 
+## Future Improvements
+
+-PO and GRN matching for advanced invoice verification.
+-AI demand forecasting for smart stock replenishment.
+-Automated exception handling and approval routing.
+-Multi-warehouse support with supplier analytic
+
+---
+
 ## 👨‍💻 Development Team
 
 **Team Waresys**
@@ -238,3 +247,4 @@ An academic project focused on **automated invoice intelligence and warehouse in
 © 2025 — All Rights Reserved
 
 ---
+
